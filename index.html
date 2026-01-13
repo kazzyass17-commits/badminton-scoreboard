@@ -20,25 +20,18 @@
     <section class="card settings-card">
       <h2>設定</h2>
       <div class="setting-row">
-        <label for="targetPoints">到達点</label>
-        <select id="targetPoints">
-          <option value="21">21点</option>
-          <option value="30">30点</option>
-        </select>
+        <div class="setting-label">到達点</div>
+        <div class="radio-group" id="targetPointsGroup">
+          <label><input type="radio" name="targetPoints" value="21" checked />21点</label>
+          <label><input type="radio" name="targetPoints" value="15" />15点</label>
+        </div>
       </div>
       <div class="setting-row">
-        <label for="allowDeuce">デュース</label>
-        <label class="switch">
-          <input type="checkbox" id="allowDeuce" checked />
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="setting-row">
-        <label for="cumulativeFlag">累積方式</label>
-        <label class="switch">
-          <input type="checkbox" id="cumulativeFlag" />
-          <span class="slider"></span>
-        </label>
+        <div class="setting-label">デュース</div>
+        <div class="radio-group" id="deuceGroup">
+          <label><input type="radio" name="allowDeuce" value="true" checked />有</label>
+          <label><input type="radio" name="allowDeuce" value="false" />無</label>
+        </div>
       </div>
     </section>
 

@@ -4,9 +4,8 @@ const statusEl = () => document.getElementById("storageStatus");
 
 const $ = (id) => document.getElementById(id);
 const controls = {
-  targetPoints: $("targetPoints"),
-  allowDeuce: $("allowDeuce"),
-  cumulative: $("cumulativeFlag"),
+  targetPoints: document.querySelectorAll('input[name="targetPoints"]'),
+  allowDeuce: document.querySelectorAll('input[name="allowDeuce"]'),
   nameA1: $("nameA1"),
   nameA2: $("nameA2"),
   nameB1: $("nameB1"),
@@ -28,14 +27,13 @@ const defaultState = () => ({
   settings: {
     targetPoints: 21,
     allowDeuce: true,
-    cumulative: false,
   },
   players: {
     A: { p1: "選手A1", p2: "選手A2" },
     B: { p1: "選手B1", p2: "選手B2" },
   },
   scores: { A: 0, B: 0, setNo: 1 },
-  pointLog: [],
+  pointLog: [], // [{ side, serving, positions, scores }]
   history: [],
   serving: { side: "A", member: "1" },
   positions: {
@@ -104,6 +102,10 @@ function migrate(data) {
   if (!data?.positions) {
     next.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
   }
+  // pointLog旧形式（文字列）を無視
+  if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
+    next.pointLog = [];
+  }
   return next;
 }
 
@@ -118,9 +120,12 @@ function saveState() {
 }
 
 function syncUI() {
-  controls.targetPoints.value = String(state.settings.targetPoints);
-  controls.allowDeuce.checked = state.settings.allowDeuce;
-  controls.cumulative.checked = state.settings.cumulative;
+  controls.targetPoints.forEach((r) => {
+    r.checked = Number(r.value) === state.settings.targetPoints;
+  });
+  controls.allowDeuce.forEach((r) => {
+    r.checked = (r.value === "true") === state.settings.allowDeuce;
+  });
 
   controls.nameA1.value = state.players.A.p1;
   controls.nameA2.value = state.players.A.p2;
@@ -157,7 +162,7 @@ function renderHistory() {
       const meta = document.createElement("div");
       meta.className = "meta";
       const serverTxt = item.server ? ` / サーブ: ${item.server.side}${item.server.member}` : "";
-      meta.textContent = `到達点${item.target} / デュース${item.allowDeuce ? "有" : "無"} / 累積${item.cumulative ? "ON" : "OFF"}${serverTxt}`;
+      meta.textContent = `到達点${item.target} / デュース${item.allowDeuce ? "有" : "無"}${serverTxt}`;
       left.appendChild(title);
       left.appendChild(meta);
 
@@ -217,16 +222,25 @@ function resolveServerAfterPoint(scoringSide, previousServingSide) {
     return state.serving; // memberは維持
   }
   // レシーブ側が得点: サービス権獲得。自陣の得点偶奇で右/左を決める
-  const score = state.scores[scoringSide];
+  const score = state.scores[scoringSide] + 1; // これから加算される分を考慮
   const pos = state.positions[scoringSide];
   const member = score % 2 === 0 ? pos.right : pos.left;
   return { side: scoringSide, member };
 }
 
 function addPoint(side) {
+  const snapshot = {
+    side,
+    serving: { ...state.serving },
+    positions: {
+      A: { ...state.positions.A },
+      B: { ...state.positions.B },
+    },
+    scores: { ...state.scores },
+  };
   const prevServingSide = state.serving.side;
+  state.pointLog.push(snapshot);
   state.scores[side] += 1;
-  state.pointLog.push(side);
   state.serving = resolveServerAfterPoint(side, prevServingSide);
   setStatus("編集中");
   syncUI();
@@ -238,10 +252,10 @@ function addPoint(side) {
 
 function undoLastPoint() {
   if (state.pointLog.length === 0) return;
-  const side = state.pointLog.pop();
-  if (state.scores[side] > 0) {
-    state.scores[side] -= 1;
-  }
+  const snap = state.pointLog.pop();
+  state.serving = snap.serving;
+  state.positions = snap.positions;
+  state.scores = snap.scores;
   setStatus("編集中");
   syncUI();
   saveState();
@@ -254,7 +268,6 @@ function finishSet() {
     scoreB: state.scores.B,
     target: state.settings.targetPoints,
     allowDeuce: state.settings.allowDeuce,
-    cumulative: state.settings.cumulative,
     server: state.serving,
     endedAt: Date.now(),
   };
