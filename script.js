@@ -247,6 +247,7 @@ function addPoint(side) {
       B: { ...state.positions.B },
     },
     scores: { ...state.scores },
+    lastServer: { ...state.lastServer },
   };
   const prevServingSide = state.serving.side;
   state.pointLog.push(snapshot);
@@ -267,6 +268,7 @@ function undoLastPoint() {
   state.serving = snap.serving;
   state.positions = snap.positions;
   state.scores = snap.scores;
+  state.lastServer = snap.lastServer;
   setStatus("編集中");
   syncUI();
   saveState();
