@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Badminton Scoreboard</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="phase-label">Phase 0 / 練習試合</p>
+      <h1>バドミントンスコアボード</h1>
+      <p class="subtitle">スマホ専用・オフライン対応</p>
+    </div>
+    <div class="status-pill" id="storageStatus">未保存</div>
+  </header>
+
+  <main>
+    <section class="card settings-card">
+      <h2>設定</h2>
+      <div class="setting-row">
+        <label for="targetPoints">到達点</label>
+        <select id="targetPoints">
+          <option value="21">21点</option>
+          <option value="30">30点</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label for="allowDeuce">デュース</label>
+        <label class="switch">
+          <input type="checkbox" id="allowDeuce" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label for="cumulativeFlag">累積方式</label>
+        <label class="switch">
+          <input type="checkbox" id="cumulativeFlag" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card scoreboard-card">
+      <div class="names">
+        <div class="name-group">
+          <div class="side-label">サイドA</div>
+          <div class="name-input duo">
+            <input id="nameA1" type="text" placeholder="選手A1" autocomplete="off" />
+            <input id="nameA2" type="text" placeholder="選手A2" autocomplete="off" />
+          </div>
+        </div>
+        <div class="name-group">
+          <div class="side-label">サイドB</div>
+          <div class="name-input duo">
+            <input id="nameB1" type="text" placeholder="選手B1" autocomplete="off" />
+            <input id="nameB2" type="text" placeholder="選手B2" autocomplete="off" />
+          </div>
+        </div>
+      </div>
+
+      <div class="serve-control">
+        <div class="serve-info">
+          <p class="muted">現在のサーバー</p>
+          <div class="server-badge" id="serverBadge">A1</div>
+        </div>
+        <div class="serve-buttons" id="serveButtons">
+          <button class="btn tiny" data-server="A-1">A1</button>
+          <button class="btn tiny" data-server="A-2">A2</button>
+          <button class="btn tiny" data-server="B-1">B1</button>
+          <button class="btn tiny" data-server="B-2">B2</button>
+        </div>
+      </div>
+
+      <div class="scores">
+        <div class="side">
+          <div class="score" id="scoreA">0</div>
+          <button class="btn main" data-side="A">+1</button>
+        </div>
+        <div class="set-info">
+          <p class="set-label">セット</p>
+          <div class="set-number" id="setNumber">1</div>
+        </div>
+        <div class="side">
+          <div class="score" id="scoreB">0</div>
+          <button class="btn main" data-side="B">+1</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn ghost" id="undoBtn">1点戻す</button>
+        <button class="btn warn" id="finishSetBtn">セット終了</button>
+        <button class="btn danger" id="resetBtn">全リセット</button>
+      </div>
+    </section>
+
+    <section class="card history-card">
+      <div class="history-header">
+        <h2>セット履歴</h2>
+        <button class="btn ghost" id="clearHistoryBtn">履歴クリア</button>
+      </div>
+      <div id="historyList" class="history-list empty">まだセットがありません</div>
+    </section>
+
+    <footer class="footer">
+      <p>ローカル保存／オフライン対応。大会用エンティティはコード内に保持。</p>
+    </footer>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
