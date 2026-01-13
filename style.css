@@ -93,7 +93,7 @@ main {
 
 .settings-card .setting-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
@@ -103,14 +103,32 @@ main {
   border-bottom: none;
 }
 
+.setting-row.compact {
+  padding: 8px 0;
+}
+
+.setting-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .setting-label {
   color: var(--text);
   font-weight: 600;
+  font-size: 12px;
+}
+
+.setting-label.divider {
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
 }
 
 .radio-group {
   display: flex;
   gap: 12px;
+  font-size: 12px;
 }
 
 .radio-group label {
@@ -160,58 +178,11 @@ main {
   font-size: 16px;
 }
 
-.serve-control {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  margin-top: 12px;
+.name-input input.serving {
+  border-color: rgba(56, 189, 248, 0.9);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
 }
 
-.serve-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.muted {
-  color: var(--muted);
-  margin: 0;
-  font-size: 13px;
-}
-
-.server-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  background: rgba(56, 189, 248, 0.15);
-  color: #e0f2fe;
-  font-weight: 700;
-}
-
-.serve-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(60px, 1fr));
-  gap: 8px;
-  width: 100%;
-}
-
-.btn.tiny {
-  padding: 10px;
-  font-size: 14px;
-}
-
-.btn.tiny.active {
-  border-color: rgba(56, 189, 248, 0.8);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
-}
 
 .scores {
   display: grid;

@@ -14,8 +14,6 @@ const controls = {
   scoreB: $("scoreB"),
   setNumber: $("setNumber"),
   historyList: $("historyList"),
-  serverBadge: $("serverBadge"),
-  serveButtons: document.querySelectorAll("[data-server]"),
   buttons: document.querySelectorAll("button[data-side]"),
   undo: $("undoBtn"),
   reset: $("resetBtn"),
@@ -162,7 +160,7 @@ function renderHistory() {
       const meta = document.createElement("div");
       meta.className = "meta";
       const serverTxt = item.server ? ` / サーブ: ${item.server.side}${item.server.member}` : "";
-      meta.textContent = `到達点${item.target} / デュース${item.allowDeuce ? "有" : "無"}${serverTxt}`;
+      meta.textContent = `ポイント${item.target} / セッティング${item.allowDeuce ? "有" : "無"}${serverTxt}`;
       left.appendChild(title);
       left.appendChild(meta);
 
@@ -184,30 +182,30 @@ function isSetFinished() {
   const b = state.scores.B;
   const maxScore = Math.max(a, b);
   const lead = Math.abs(a - b);
+  const cap = state.settings.allowDeuce
+    ? target === 21
+      ? 30
+      : target + 5
+    : target;
 
   if (state.settings.allowDeuce) {
+    if (maxScore >= cap) return true; // 上限到達で終了
     return maxScore >= target && lead >= 2;
   }
   return maxScore >= target;
 }
 
 function updateServeUI() {
-  const label = `${state.serving.side}${state.serving.member}`;
-  controls.serverBadge.textContent = label;
-  controls.serveButtons.forEach((btn) => {
-    const active = btn.dataset.server === `${state.serving.side}-${state.serving.member}`;
-    btn.classList.toggle("active", active);
+  // 名前入力にサーブ表示
+  [
+    { side: "A", member: "1", input: controls.nameA1 },
+    { side: "A", member: "2", input: controls.nameA2 },
+    { side: "B", member: "1", input: controls.nameB1 },
+    { side: "B", member: "2", input: controls.nameB2 },
+  ].forEach(({ side, member, input }) => {
+    const serving = state.serving.side === side && state.serving.member === member;
+    input.classList.toggle("serving", serving);
   });
-}
-
-function setServer(side, member) {
-  state.serving = { side, member };
-  const other = member === "1" ? "2" : "1";
-  // サーブ指定時は右コートにサーバーを合わせる
-  state.positions[side] = { right: member, left: other };
-  setStatus("サーブ更新");
-  updateServeUI();
-  saveState();
 }
 
 function swapPositions(side) {
@@ -221,11 +219,16 @@ function resolveServerAfterPoint(scoringSide, previousServingSide) {
     swapPositions(scoringSide);
     return state.serving; // memberは維持
   }
-  // レシーブ側が得点: サービス権獲得。自陣の得点偶奇で右/左を決める
-  const score = state.scores[scoringSide] + 1; // これから加算される分を考慮
-  const pos = state.positions[scoringSide];
-  const member = score % 2 === 0 ? pos.right : pos.left;
+  // レシーブ側が得点: サービス権獲得。最初の移動はA->B2, B->A2のルール
+  const member = "2";
+  state.positions[scoringSide] = { right: "2", left: "1" };
   return { side: scoringSide, member };
+}
+
+function getPlayerName(side, member) {
+  const p = state.players[side];
+  const key = member === "1" ? "p1" : "p2";
+  return p?.[key] ?? `${side}${member}`;
 }
 
 function addPoint(side) {
@@ -243,10 +246,11 @@ function addPoint(side) {
   state.scores[side] += 1;
   state.serving = resolveServerAfterPoint(side, prevServingSide);
   setStatus("編集中");
-  syncUI();
   if (isSetFinished()) {
-    setStatus("セット終了可能");
+    finishSet(true);
+    return;
   }
+  syncUI();
   saveState();
 }
 
@@ -261,7 +265,7 @@ function undoLastPoint() {
   saveState();
 }
 
-function finishSet() {
+function finishSet(auto = false) {
   const entry = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -274,7 +278,7 @@ function finishSet() {
   state.history.push(entry);
   state.scores = { A: 0, B: 0, setNo: state.scores.setNo + 1 };
   state.pointLog = [];
-  setStatus("セット保存");
+  setStatus(auto ? "セット自動終了" : "セット保存");
   syncUI();
   saveState();
 }

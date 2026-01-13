@@ -19,18 +19,18 @@
   <main>
     <section class="card settings-card">
       <h2>設定</h2>
-      <div class="setting-row">
-        <div class="setting-label">到達点</div>
-        <div class="radio-group" id="targetPointsGroup">
-          <label><input type="radio" name="targetPoints" value="21" checked />21点</label>
-          <label><input type="radio" name="targetPoints" value="15" />15点</label>
-        </div>
-      </div>
-      <div class="setting-row">
-        <div class="setting-label">デュース</div>
-        <div class="radio-group" id="deuceGroup">
-          <label><input type="radio" name="allowDeuce" value="true" checked />有</label>
-          <label><input type="radio" name="allowDeuce" value="false" />無</label>
+      <div class="setting-row compact">
+        <div class="setting-inline">
+          <div class="setting-label">ポイント</div>
+          <div class="radio-group" id="targetPointsGroup">
+            <label><input type="radio" name="targetPoints" value="21" checked />21</label>
+            <label><input type="radio" name="targetPoints" value="15" />15</label>
+          </div>
+          <div class="setting-label divider">セッティング</div>
+          <div class="radio-group" id="deuceGroup">
+            <label><input type="radio" name="allowDeuce" value="true" checked />有</label>
+            <label><input type="radio" name="allowDeuce" value="false" />無</label>
+          </div>
         </div>
       </div>
     </section>
@@ -50,19 +50,6 @@
             <input id="nameB1" type="text" placeholder="選手B1" autocomplete="off" />
             <input id="nameB2" type="text" placeholder="選手B2" autocomplete="off" />
           </div>
-        </div>
-      </div>
-
-      <div class="serve-control">
-        <div class="serve-info">
-          <p class="muted">現在のサーバー</p>
-          <div class="server-badge" id="serverBadge">A1</div>
-        </div>
-        <div class="serve-buttons" id="serveButtons">
-          <button class="btn tiny" data-server="A-1">A1</button>
-          <button class="btn tiny" data-server="A-2">A2</button>
-          <button class="btn tiny" data-server="B-1">B1</button>
-          <button class="btn tiny" data-server="B-2">B2</button>
         </div>
       </div>
 
