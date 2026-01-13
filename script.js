@@ -302,13 +302,6 @@ function bindEvents() {
     btn.addEventListener("click", () => addPoint(btn.dataset.side));
   });
 
-  controls.serveButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const [side, member] = btn.dataset.server.split("-");
-      setServer(side, member);
-    });
-  });
-
   controls.undo.addEventListener("click", undoLastPoint);
   controls.reset.addEventListener("click", () => {
     if (confirm("全データを初期化しますか？")) resetAll();
@@ -326,12 +319,6 @@ function bindEvents() {
 
   controls.allowDeuce.addEventListener("change", (e) => {
     state.settings.allowDeuce = e.target.checked;
-    setStatus("設定変更");
-    saveState();
-  });
-
-  controls.cumulative.addEventListener("change", (e) => {
-    state.settings.cumulative = e.target.checked;
     setStatus("設定変更");
     saveState();
   });
