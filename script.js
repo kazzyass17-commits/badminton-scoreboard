@@ -38,6 +38,7 @@ const defaultState = () => ({
     A: { right: "1", left: "2" }, // サーブサイドのローテーション用
     B: { right: "1", left: "2" },
   },
+  lastServer: { A: "1", B: "1" },
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -99,6 +100,9 @@ function migrate(data) {
   }
   if (!data?.positions) {
     next.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+  }
+  if (!data?.lastServer) {
+    next.lastServer = { A: "1", B: "1" };
   }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
@@ -219,9 +223,12 @@ function resolveServerAfterPoint(scoringSide, previousServingSide) {
     swapPositions(scoringSide);
     return state.serving; // memberは維持
   }
-  // レシーブ側が得点: サービス権獲得。最初の移動はA->B2, B->A2のルール
-  const member = "2";
-  state.positions[scoringSide] = { right: "2", left: "1" };
+  // レシーブ側が得点: サービス権獲得。サイド内でサーバーを交互に切替
+  const last = state.lastServer[scoringSide] ?? "1";
+  const member = last === "1" ? "2" : "1";
+  state.lastServer[scoringSide] = member;
+  const other = member === "1" ? "2" : "1";
+  state.positions[scoringSide] = { right: member, left: other };
   return { side: scoringSide, member };
 }
 
