@@ -6,6 +6,7 @@ const $ = (id) => document.getElementById(id);
 const controls = {
   targetPoints: document.querySelectorAll('input[name="targetPoints"]'),
   allowDeuce: document.querySelectorAll('input[name="allowDeuce"]'),
+  initialServe: document.querySelectorAll('input[name="initialServe"]'),
   nameA1: $("nameA1"),
   nameA2: $("nameA2"),
   nameB1: $("nameB1"),
@@ -136,8 +137,41 @@ function syncUI() {
   controls.scoreA.textContent = state.scores.A;
   controls.scoreB.textContent = state.scores.B;
   controls.setNumber.textContent = state.scores.setNo;
+  syncServeSelector();
   updateServeUI();
   renderHistory();
+}
+
+function canChangeInitialServe() {
+  const noPoints = state.scores.A === 0 && state.scores.B === 0 && state.pointLog.length === 0;
+  if (!noPoints) return false;
+  if (state.scores.setNo === 1) return true;
+  const last = state.history[state.history.length - 1];
+  if (!last) return true;
+  const winnerSide = last.scoreA > last.scoreB ? "A" : "B";
+  return { A: true, B: true }[winnerSide];
+}
+
+function syncServeSelector() {
+  const allowChange = canChangeInitialServe();
+  const desired = `${state.serving.side}-${state.serving.member}`;
+  controls.initialServe.forEach((r) => {
+    const [side] = r.value.split("-");
+    const last = state.history[state.history.length - 1];
+    const winnerSide = last ? (last.scoreA > last.scoreB ? "A" : "B") : null;
+    const allowedSide = state.scores.setNo === 1 ? true : winnerSide === side;
+    r.disabled = !allowChange || !allowedSide;
+    r.checked = r.value === desired;
+  });
+}
+
+function setInitialServeFromUI(value) {
+  const [side, member] = value.split("-");
+  state.serving = { side, member };
+  state.lastServer[side] = member;
+  state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+  updateServeUI();
+  saveState();
 }
 
 function renderHistory() {
@@ -287,6 +321,11 @@ function finishSet(auto = false) {
   state.history.push(entry);
   state.scores = { A: 0, B: 0, setNo: state.scores.setNo + 1 };
   state.pointLog = [];
+  // 次セット開始時: 直前セット勝者のp1を初期サーブに
+  const winnerSide = entry.scoreA > entry.scoreB ? "A" : "B";
+  state.serving = { side: winnerSide, member: "1" };
+  state.lastServer[winnerSide] = "1";
+  state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
   setStatus(auto ? "セット自動終了" : "セット保存");
   syncUI();
   saveState();
@@ -342,6 +381,14 @@ function bindEvents() {
   controls.nameA2.addEventListener("input", nameHandler("A", "p2"));
   controls.nameB1.addEventListener("input", nameHandler("B", "p1"));
   controls.nameB2.addEventListener("input", nameHandler("B", "p2"));
+
+  controls.initialServe.forEach((r) => {
+    r.addEventListener("change", (e) => {
+      if (!canChangeInitialServe()) return;
+      setInitialServeFromUI(e.target.value);
+      setStatus("開始サーブ変更");
+    });
+  });
 }
 
 function init() {

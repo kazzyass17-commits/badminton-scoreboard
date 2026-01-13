@@ -147,6 +147,10 @@ main {
   accent-color: var(--accent);
 }
 
+.radio-group.serve-start {
+  gap: 8px;
+}
+
 .scoreboard-card .names {
   display: grid;
   grid-template-columns: 1fr 1fr;
