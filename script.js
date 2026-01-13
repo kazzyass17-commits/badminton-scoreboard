@@ -7,7 +7,6 @@ const controls = {
   targetPoints: document.querySelectorAll('input[name="targetPoints"]'),
   allowDeuce: document.querySelectorAll('input[name="allowDeuce"]'),
   initialServe: document.querySelectorAll('input[name="initialServe"]'),
-  serveBanner: $("serveBanner"),
   nameA1: $("nameA1"),
   nameA2: $("nameA2"),
   nameB1: $("nameB1"),
@@ -164,7 +163,6 @@ function syncServeSelector() {
     r.disabled = !allowChange || !allowedSide;
     r.checked = r.value === desired;
   });
-  updateServeBanner();
 }
 
 function setInitialServeFromUI(value) {
@@ -272,11 +270,6 @@ function getPlayerName(side, member) {
   const p = state.players[side];
   const key = member === "1" ? "p1" : "p2";
   return p?.[key] ?? `${side}${member}`;
-}
-
-function updateServeBanner() {
-  if (!controls.serveBanner) return;
-  controls.serveBanner.textContent = `開始サーブ: ${state.serving.side}${state.serving.member}`;
 }
 
 function addPoint(side) {
