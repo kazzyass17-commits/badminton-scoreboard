@@ -382,15 +382,13 @@ function resetAll() {
     A: { ...state.players.A },
     B: { ...state.players.B },
   };
-  const preservedSettings = { ...state.settings };
-  const preservedHistory = state.history; // 履歴は保持
   state = defaultState();
   state.players = preservedPlayers;
-  state.settings = preservedSettings;
-  state.history = preservedHistory;
+  // 設定は初期化する
+  // 履歴もリセット
   state.pointLog = [];
   lastAutoFinishSnapshot = null;
-  setStatus("リセット（名前・設定・履歴保持）");
+  setStatus("リセット（名前以外リセット）");
   syncUI();
   saveState();
 }
