@@ -306,6 +306,7 @@ function addPoint(side) {
       A: [...state.displayOrder.A],
       B: [...state.displayOrder.B],
     },
+    setNo: state.scores.setNo,
   };
   const prevServingSide = state.serving.side;
   state.pointLog.push(snapshot);
@@ -330,6 +331,7 @@ function undoLastPoint() {
       state.scores = lastAutoFinishSnapshot.scores;
       state.lastServer = lastAutoFinishSnapshot.lastServer;
       state.displayOrder = lastAutoFinishSnapshot.displayOrder;
+      state.scores.setNo = lastAutoFinishSnapshot.setNo;
       lastAutoFinishSnapshot = null;
       state.history.pop(); // 自動保存されたセットを取り消す
       setStatus("自動終了を取り消し");
@@ -366,7 +368,9 @@ function finishSet(auto = false) {
   };
   state.history.push(entry);
   if (auto) {
-    // 自動終了時は状態はそのまま維持し、pointLogも保持（Undoで戻せるようにする）
+    const winnerSide = entry.scoreA > entry.scoreB ? "A" : "B";
+    advanceToNextSet(winnerSide);
+    state.pointLog = [];
     setStatus("セット自動終了");
     syncUI();
     saveState();
@@ -374,6 +378,14 @@ function finishSet(auto = false) {
     // 手動終了（今回は「全リセット」ボタン）→完全リセット
     hardResetAll();
   }
+}
+
+function advanceToNextSet(winnerSide) {
+  state.scores = { A: 0, B: 0, setNo: state.scores.setNo + 1 };
+  state.serving = { side: winnerSide, member: "1" };
+  state.lastServer[winnerSide] = "1";
+  state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+  state.displayOrder = defaultDisplayOrder();
 }
 
 function resetAll() {
