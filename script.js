@@ -22,6 +22,11 @@ const controls = {
   clearHistory: $("clearHistoryBtn"),
 };
 
+const defaultDisplayOrder = () => ({
+  A: ["p2", "p1"], // 上: A2, 下: A1
+  B: ["p1", "p2"], // 上: B1, 下: B2
+});
+
 const defaultState = () => ({
   settings: {
     targetPoints: 21,
@@ -40,10 +45,7 @@ const defaultState = () => ({
     B: { right: "1", left: "2" },
   },
   lastServer: { A: "1", B: "1" },
-  displayOrder: {
-    A: ["p1", "p2"], // UIの上段・下段の対応
-    B: ["p1", "p2"],
-  },
+  displayOrder: defaultDisplayOrder(),
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -109,9 +111,8 @@ function migrate(data) {
   if (!data?.lastServer) {
     next.lastServer = { A: "1", B: "1" };
   }
-  if (!data?.displayOrder) {
-    next.displayOrder = { A: ["p1", "p2"], B: ["p1", "p2"] };
-  }
+  // displayOrderは新デフォルトに揃える（A:上p2/下p1, B:上p1/下p2）
+  next.displayOrder = defaultDisplayOrder();
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
     next.pointLog = [];
@@ -345,7 +346,7 @@ function finishSet(auto = false) {
   state.serving = { side: winnerSide, member: "1" };
   state.lastServer[winnerSide] = "1";
   state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
-  state.displayOrder = { A: ["p1", "p2"], B: ["p1", "p2"] };
+  state.displayOrder = defaultDisplayOrder();
   setStatus(auto ? "セット自動終了" : "セット保存");
   syncUI();
   saveState();
