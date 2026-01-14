@@ -210,8 +210,12 @@ function renderHistory() {
       meta.className = "meta";
       const serverTxt = item.server ? ` / サーブ: ${item.server.side}${item.server.member}` : "";
       meta.textContent = `ポイント${item.target} / セッティング${item.allowDeuce ? "有" : "無"}${serverTxt}`;
+      const names = document.createElement("div");
+      names.className = "meta";
+      names.textContent = `A: ${item.names.A.join(" / ")} ｜ B: ${item.names.B.join(" / ")}`;
       left.appendChild(title);
       left.appendChild(meta);
+      left.appendChild(names);
 
       const right = document.createElement("div");
       right.className = "meta";
@@ -329,6 +333,10 @@ function undoLastPoint() {
 }
 
 function finishSet(auto = false) {
+  const names = {
+    A: state.displayOrder.A.map((k) => state.players.A[k]),
+    B: state.displayOrder.B.map((k) => state.players.B[k]),
+  };
   const entry = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -336,6 +344,7 @@ function finishSet(auto = false) {
     target: state.settings.targetPoints,
     allowDeuce: state.settings.allowDeuce,
     server: state.serving,
+    names,
     endedAt: Date.now(),
   };
   state.history.push(entry);
