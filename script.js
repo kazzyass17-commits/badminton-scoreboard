@@ -362,8 +362,15 @@ function finishSet(auto = false) {
 }
 
 function resetAll() {
+  const preservedPlayers = {
+    A: { ...state.players.A },
+    B: { ...state.players.B },
+  };
+  const preservedSettings = { ...state.settings };
   state = defaultState();
-  setStatus("初期化");
+  state.players = preservedPlayers;
+  state.settings = preservedSettings;
+  setStatus("初期化（名前保持）");
   syncUI();
   saveState();
 }
