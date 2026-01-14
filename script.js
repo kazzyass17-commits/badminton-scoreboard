@@ -40,6 +40,10 @@ const defaultState = () => ({
     B: { right: "1", left: "2" },
   },
   lastServer: { A: "1", B: "1" },
+  displayOrder: {
+    A: ["p1", "p2"], // UIの上段・下段の対応
+    B: ["p1", "p2"],
+  },
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -105,6 +109,9 @@ function migrate(data) {
   if (!data?.lastServer) {
     next.lastServer = { A: "1", B: "1" };
   }
+  if (!data?.displayOrder) {
+    next.displayOrder = { A: ["p1", "p2"], B: ["p1", "p2"] };
+  }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
     next.pointLog = [];
@@ -130,10 +137,13 @@ function syncUI() {
     r.checked = (r.value === "true") === state.settings.allowDeuce;
   });
 
-  controls.nameA1.value = state.players.A.p1;
-  controls.nameA2.value = state.players.A.p2;
-  controls.nameB1.value = state.players.B.p1;
-  controls.nameB2.value = state.players.B.p2;
+  const setInputs = (side, inputs) => {
+    const order = state.displayOrder[side];
+    inputs.top.value = state.players[side][order[0]];
+    inputs.bottom.value = state.players[side][order[1]];
+  };
+  setInputs("A", { top: controls.nameA1, bottom: controls.nameA2 });
+  setInputs("B", { top: controls.nameB1, bottom: controls.nameB2 });
   controls.scoreA.textContent = state.scores.A;
   controls.scoreB.textContent = state.scores.B;
   controls.setNumber.textContent = state.scores.setNo;
@@ -236,13 +246,15 @@ function isSetFinished() {
 function updateServeUI() {
   // 名前入力にサーブ表示
   [
-    { side: "A", member: "1", input: controls.nameA1 },
-    { side: "A", member: "2", input: controls.nameA2 },
-    { side: "B", member: "1", input: controls.nameB1 },
-    { side: "B", member: "2", input: controls.nameB2 },
-  ].forEach(({ side, member, input }) => {
-    const serving = state.serving.side === side && state.serving.member === member;
-    input.classList.toggle("serving", serving);
+    { side: "A", inputs: [controls.nameA1, controls.nameA2] },
+    { side: "B", inputs: [controls.nameB1, controls.nameB2] },
+  ].forEach(({ side, inputs }) => {
+    const order = state.displayOrder[side];
+    inputs.forEach((input) => input.classList.remove("serving"));
+    const idx = order.findIndex((k) => k === `p${state.serving.member}`);
+    if (state.serving.side === side && idx !== -1) {
+      inputs[idx].classList.add("serving");
+    }
   });
 }
 
@@ -255,6 +267,8 @@ function resolveServerAfterPoint(scoringSide, previousServingSide) {
   if (scoringSide === previousServingSide) {
     // サーブ側が得点: 同じプレイヤーがサーブ継続し、左右を入れ替える
     swapPositions(scoringSide);
+    // UIの上下も入れ替え
+    state.displayOrder[scoringSide].reverse();
     return state.serving; // memberは維持
   }
   // レシーブ側が得点: サービス権獲得。サイド内でサーバーを交互に切替
@@ -282,6 +296,10 @@ function addPoint(side) {
     },
     scores: { ...state.scores },
     lastServer: { ...state.lastServer },
+    displayOrder: {
+      A: [...state.displayOrder.A],
+      B: [...state.displayOrder.B],
+    },
   };
   const prevServingSide = state.serving.side;
   state.pointLog.push(snapshot);
@@ -303,6 +321,7 @@ function undoLastPoint() {
   state.positions = snap.positions;
   state.scores = snap.scores;
   state.lastServer = snap.lastServer;
+  state.displayOrder = snap.displayOrder;
   setStatus("編集中");
   syncUI();
   saveState();
@@ -326,6 +345,7 @@ function finishSet(auto = false) {
   state.serving = { side: winnerSide, member: "1" };
   state.lastServer[winnerSide] = "1";
   state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+  state.displayOrder = { A: ["p1", "p2"], B: ["p1", "p2"] };
   setStatus(auto ? "セット自動終了" : "セット保存");
   syncUI();
   saveState();
@@ -377,16 +397,18 @@ function bindEvents() {
     });
   });
 
-  const nameHandler = (side, member) => (e) => {
-    state.players[side][member] = e.target.value;
+  const nameHandler = (side, slot) => (e) => {
+    const order = state.displayOrder[side];
+    const memberKey = order[slot];
+    state.players[side][memberKey] = e.target.value;
     setStatus("名前更新");
     saveState();
   };
 
-  controls.nameA1.addEventListener("input", nameHandler("A", "p1"));
-  controls.nameA2.addEventListener("input", nameHandler("A", "p2"));
-  controls.nameB1.addEventListener("input", nameHandler("B", "p1"));
-  controls.nameB2.addEventListener("input", nameHandler("B", "p2"));
+  controls.nameA1.addEventListener("input", nameHandler("A", 0)); // 上段
+  controls.nameA2.addEventListener("input", nameHandler("A", 1)); // 下段
+  controls.nameB1.addEventListener("input", nameHandler("B", 0)); // 上段
+  controls.nameB2.addEventListener("input", nameHandler("B", 1)); // 下段
 
   controls.initialServe.forEach((r) => {
     r.addEventListener("change", (e) => {
