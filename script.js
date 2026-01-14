@@ -415,9 +415,11 @@ function bindEvents() {
 
   controls.undo.addEventListener("click", undoLastPoint);
   controls.softReset.addEventListener("click", () => {
-    if (confirm("全データを初期化しますか？")) resetAll();
+    if (confirm("名前以外のデータを初期化しますか？")) resetAll();
   });
-  controls.hardReset.addEventListener("click", hardResetAll);
+  controls.hardReset.addEventListener("click", () => {
+    if (confirm("全データ（名前含む）を初期化しますか？")) hardResetAll();
+  });
   controls.clearHistory.addEventListener("click", () => {
     if (confirm("セット履歴を消去しますか？")) clearHistory();
   });
