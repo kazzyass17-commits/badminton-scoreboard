@@ -16,9 +16,9 @@ const controls = {
   setNumber: $("setNumber"),
   historyList: $("historyList"),
   buttons: document.querySelectorAll("button[data-side]"),
-  undo: $("undoBtn"),
-  reset: $("resetBtn"),
-  finishSet: $("finishSetBtn"),
+  undo: $("btnUndo"),
+  softReset: $("btnSoftReset"),
+  hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
 };
 
@@ -416,10 +416,10 @@ function bindEvents() {
   });
 
   controls.undo.addEventListener("click", undoLastPoint);
-  controls.reset.addEventListener("click", () => {
+  controls.softReset.addEventListener("click", () => {
     if (confirm("全データを初期化しますか？")) resetAll();
   });
-  controls.finishSet.addEventListener("click", finishSet);
+  controls.hardReset.addEventListener("click", hardResetAll);
   controls.clearHistory.addEventListener("click", () => {
     if (confirm("セット履歴を消去しますか？")) clearHistory();
   });
