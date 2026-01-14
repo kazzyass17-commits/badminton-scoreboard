@@ -86,6 +86,7 @@ class LocalDataStore {
 
 const store = new LocalDataStore(STORAGE_KEY);
 let state = migrate(store.load() ?? defaultState());
+let lastAutoFinishSnapshot = null;
 
 function migrate(data) {
   const next = { ...defaultState(), ...data };
@@ -312,6 +313,7 @@ function addPoint(side) {
   state.serving = resolveServerAfterPoint(side, prevServingSide);
   setStatus("編集中");
   if (isSetFinished()) {
+    lastAutoFinishSnapshot = snapshot;
     finishSet(true);
     return;
   }
@@ -320,7 +322,22 @@ function addPoint(side) {
 }
 
 function undoLastPoint() {
-  if (state.pointLog.length === 0) return;
+  if (state.pointLog.length === 0) {
+    // 直前が自動セット終了だった場合、元に戻す
+    if (lastAutoFinishSnapshot) {
+      state.serving = lastAutoFinishSnapshot.serving;
+      state.positions = lastAutoFinishSnapshot.positions;
+      state.scores = lastAutoFinishSnapshot.scores;
+      state.lastServer = lastAutoFinishSnapshot.lastServer;
+      state.displayOrder = lastAutoFinishSnapshot.displayOrder;
+      lastAutoFinishSnapshot = null;
+      state.history.pop(); // 自動保存されたセットを取り消す
+      setStatus("自動終了を取り消し");
+      syncUI();
+      saveState();
+    }
+    return;
+  }
   const snap = state.pointLog.pop();
   state.serving = snap.serving;
   state.positions = snap.positions;
@@ -348,29 +365,40 @@ function finishSet(auto = false) {
     endedAt: Date.now(),
   };
   state.history.push(entry);
-  state.scores = { A: 0, B: 0, setNo: state.scores.setNo + 1 };
-  state.pointLog = [];
-  // 次セット開始時: 直前セット勝者のp1を初期サーブに
-  const winnerSide = entry.scoreA > entry.scoreB ? "A" : "B";
-  state.serving = { side: winnerSide, member: "1" };
-  state.lastServer[winnerSide] = "1";
-  state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
-  state.displayOrder = defaultDisplayOrder();
-  setStatus(auto ? "セット自動終了" : "セット保存");
-  syncUI();
-  saveState();
+  if (auto) {
+    // 自動終了時は状態はそのまま維持し、pointLogも保持（Undoで戻せるようにする）
+    setStatus("セット自動終了");
+    syncUI();
+    saveState();
+  } else {
+    // 手動終了（今回は「全リセット」ボタン）→完全リセット
+    hardResetAll();
+  }
 }
 
 function resetAll() {
+  // 名前と設定を保持し、それ以外をリセット
   const preservedPlayers = {
     A: { ...state.players.A },
     B: { ...state.players.B },
   };
   const preservedSettings = { ...state.settings };
+  const preservedHistory = state.history; // 履歴は保持
   state = defaultState();
   state.players = preservedPlayers;
   state.settings = preservedSettings;
-  setStatus("初期化（名前保持）");
+  state.history = preservedHistory;
+  state.pointLog = [];
+  lastAutoFinishSnapshot = null;
+  setStatus("リセット（名前・設定・履歴保持）");
+  syncUI();
+  saveState();
+}
+
+function hardResetAll() {
+  state = defaultState();
+  lastAutoFinishSnapshot = null;
+  setStatus("全リセット");
   syncUI();
   saveState();
 }
