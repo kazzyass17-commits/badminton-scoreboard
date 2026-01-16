@@ -33,7 +33,32 @@ body {
   margin: 0 auto 32px;
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-template-areas:
+    "settings playerdb"
+    "scoreboard playerdb"
+    "history playerdb"
+    "footer footer";
   gap: 16px;
+}
+
+.settings-card {
+  grid-area: settings;
+}
+
+.scoreboard-card {
+  grid-area: scoreboard;
+}
+
+.history-card {
+  grid-area: history;
+}
+
+.playerdb-card {
+  grid-area: playerdb;
+}
+
+.footer {
+  grid-area: footer;
 }
 
 .app-header {
@@ -400,6 +425,12 @@ body {
 @media (max-width: 520px) {
   .layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "settings"
+      "scoreboard"
+      "history"
+      "playerdb"
+      "footer";
   }
   .scores {
     grid-template-columns: 1fr 1fr;
