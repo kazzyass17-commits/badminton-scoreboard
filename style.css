@@ -32,7 +32,7 @@ body {
   max-width: 1180px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(620px, 3fr) minmax(200px, 1.2fr);
   grid-template-areas:
     "settings playerdb"
     "scoreboard playerdb"
@@ -393,7 +393,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
@@ -403,17 +403,6 @@ body {
 .player-name {
   flex: 1;
   font-weight: 600;
-}
-
-.assign-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 6px;
-}
-
-.btn.micro {
-  padding: 8px 10px;
-  font-size: 12px;
 }
 
 .footer {

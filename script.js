@@ -258,23 +258,7 @@ function renderPlayerDB() {
     const name = document.createElement("div");
     name.className = "player-name";
     name.textContent = p.name;
-    const btns = document.createElement("div");
-    btns.className = "assign-buttons";
-    const slots = [
-      { slot: "A0", label: "A上" },
-      { slot: "A1", label: "A下" },
-      { slot: "B0", label: "B上" },
-      { slot: "B1", label: "B下" },
-    ];
-    slots.forEach(({ slot, label }) => {
-      const btn = document.createElement("button");
-      btn.className = "btn micro";
-      btn.textContent = label;
-      btn.addEventListener("click", () => assignPlayerToSlot(p.name, slot));
-      btns.appendChild(btn);
-    });
     row.appendChild(name);
-    row.appendChild(btns);
     list.appendChild(row);
   });
 }
