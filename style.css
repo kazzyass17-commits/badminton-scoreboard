@@ -57,6 +57,10 @@ body {
   grid-area: playerdb;
 }
 
+.scoresheet-card {
+  grid-area: history;
+}
+
 .footer {
   grid-area: footer;
 }
@@ -69,11 +73,11 @@ body {
   gap: 12px;
 }
 
-.app-header > div {
+.header-left {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .app-header h1 {
@@ -313,6 +317,11 @@ body {
   color: #ffe4e6;
 }
 
+.btn.toggle-btn {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
 .history-card .history-header {
   display: flex;
   align-items: center;
@@ -420,6 +429,10 @@ body {
 .btn.micro {
   padding: 6px 8px;
   font-size: 11px;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .footer {

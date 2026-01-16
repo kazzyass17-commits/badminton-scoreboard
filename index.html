@@ -8,16 +8,19 @@
 </head>
 <body>
   <header class="app-header">
-    <div>
-      <p class="phase-label">Phase 0 / 練習試合</p>
-      <h1>バドミントンスコアボード</h1>
-      <p class="subtitle">スマホ専用・オフライン対応</p>
+    <div class="header-left">
+      <button class="btn toggle-btn" id="btnViewToggle">スコアボード ⇄ スコアシート</button>
+      <div>
+        <p class="phase-label">Phase 0 / 練習試合</p>
+        <h1>バドミントンスコアボード</h1>
+        <p class="subtitle">スマホ専用・オフライン対応</p>
+      </div>
     </div>
     <div class="status-pill" id="storageStatus">未保存</div>
   </header>
 
   <main class="layout">
-    <section class="card settings-card">
+    <section class="card settings-card view-board">
       <div class="setting-row compact">
         <div class="setting-inline">
           <div class="setting-title">設定</div>
@@ -53,7 +56,7 @@
       -->
     </section>
 
-    <section class="card scoreboard-card">
+    <section class="card scoreboard-card view-board">
       <div class="names">
         <div class="name-group">
           <div class="side-label">サイドA</div>
@@ -93,7 +96,7 @@
       </div>
     </section>
 
-    <section class="card history-card">
+    <section class="card history-card view-board">
       <div class="history-header">
         <h2>セット履歴</h2>
         <button class="btn ghost" id="clearHistoryBtn">履歴クリア</button>
@@ -101,7 +104,7 @@
       <div id="historyList" class="history-list empty">まだセットがありません</div>
     </section>
 
-    <section class="card playerdb-card">
+    <section class="card playerdb-card view-board">
       <div class="playerdb-header">
         <h2>選手DB</h2>
         <div class="playerdb-add">
@@ -110,6 +113,11 @@
         </div>
       </div>
       <div id="playerDbList" class="playerdb-list empty">まだ登録がありません</div>
+    </section>
+
+    <section class="card scoresheet-card view-sheet hidden" id="scoreSheetCard">
+      <h2>スコアシート</h2>
+      <div id="scoreSheetContent">まだスコアがありません</div>
     </section>
 
     <footer class="footer">

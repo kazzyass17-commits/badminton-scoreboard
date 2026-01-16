@@ -53,6 +53,7 @@ const defaultState = () => ({
   lastServer: { A: "1", B: "1" },
   displayOrder: defaultDisplayOrder(),
   playerDB: [],
+  viewMode: "board",
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -130,6 +131,9 @@ function migrate(data) {
   if (!Array.isArray(data?.playerDB)) {
     next.playerDB = [];
   }
+  if (!data?.viewMode) {
+    next.viewMode = "board";
+  }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
     next.pointLog = [];
@@ -173,6 +177,7 @@ function syncUI() {
   renderHistory();
   renderPlayerDB();
   updateServeRadioState();
+  syncView();
 }
 
 function canChangeInitialServe() {
@@ -655,6 +660,16 @@ function bindEvents() {
     });
   });
 
+  const toggleBtn = document.getElementById("btnViewToggle");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      state.viewMode = state.viewMode === "board" ? "sheet" : "board";
+      syncView();
+      saveState();
+      setStatus(`表示切替: ${state.viewMode === "sheet" ? "スコアシート" : "スコアボード"}`);
+    });
+  }
+
   controls.serveSide.forEach((r) => {
     r.addEventListener("change", (e) => {
       setServeSide(e.target.value);
@@ -711,4 +726,28 @@ function updateServeRadioState() {
   document.querySelectorAll(".serve-faint").forEach((el) => {
     el.classList.toggle("active", atStart);
   });
+}
+
+function syncView() {
+  const board = document.querySelectorAll(".view-board");
+  const sheet = document.querySelectorAll(".view-sheet");
+  const onSheet = state.viewMode === "sheet";
+  board.forEach((el) => el.classList.toggle("hidden", onSheet));
+  sheet.forEach((el) => el.classList.toggle("hidden", !onSheet));
+  renderScoreSheet();
+}
+
+function renderScoreSheet() {
+  const container = document.getElementById("scoreSheetContent");
+  if (!container) return;
+  if (!state.history.length) {
+    container.textContent = "まだスコアがありません";
+    return;
+  }
+  const last = state.history[state.history.length - 1];
+  container.innerHTML = `
+    <div><strong>セット数:</strong> ${state.history.length}</div>
+    <div><strong>最終セット:</strong> ${last.scoreA} - ${last.scoreB}</div>
+    <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
+  `;
 }
