@@ -157,6 +157,10 @@ body {
   border-right: 1px solid var(--border);
 }
 
+.serve-faint {
+  opacity: 0.5;
+}
+
 .radio-group {
   display: flex;
   gap: 12px;
