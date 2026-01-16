@@ -7,6 +7,7 @@ const controls = {
   targetPoints: document.querySelectorAll('input[name="targetPoints"]'),
   allowDeuce: document.querySelectorAll('input[name="allowDeuce"]'),
   initialServe: document.querySelectorAll('input[name="initialServe"]'),
+  serveSide: document.querySelectorAll('input[name="serveSide"]'),
   nameA1: $("nameA1"),
   nameA2: $("nameA2"),
   nameB1: $("nameB1"),
@@ -160,6 +161,7 @@ function syncUI() {
   updateServeUI();
   renderHistory();
   renderPlayerDB();
+  updateServeRadioState();
 }
 
 function canChangeInitialServe() {
@@ -592,6 +594,12 @@ function bindEvents() {
     });
   });
 
+  controls.serveSide.forEach((r) => {
+    r.addEventListener("change", () => {
+      setStatus("サーブ権表示のみ更新");
+    });
+  });
+
   if (controls.dbAddBtn) {
     controls.dbAddBtn.addEventListener("click", addPlayerToDB);
   }
@@ -632,3 +640,10 @@ function init() {
 }
 
 window.addEventListener("DOMContentLoaded", init);
+
+function updateServeRadioState() {
+  const atStart = state.scores.A === 0 && state.scores.B === 0;
+  controls.serveSide.forEach((r) => {
+    r.disabled = !atStart;
+  });
+}
