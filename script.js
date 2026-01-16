@@ -24,6 +24,7 @@ const controls = {
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
   dbReset: $("btnDbReset"),
+  shareSheet: document.getElementById("btnShareSheet"),
 };
 
 const defaultDisplayOrder = () => ({
@@ -708,6 +709,18 @@ function bindEvents() {
     el.addEventListener("dragover", makeDragOver);
     el.addEventListener("drop", makeDropHandler(side, idx));
   });
+
+  if (controls.shareSheet) {
+    controls.shareSheet.addEventListener("click", () => {
+      if (navigator.share) {
+        navigator.share({ title: "スコアシート", text: "スコアシートを共有", url: location.href }).catch(() => {
+          window.print();
+        });
+      } else {
+        window.print();
+      }
+    });
+  }
 }
 
 function init() {
@@ -740,14 +753,22 @@ function syncView() {
 function renderScoreSheet() {
   const container = document.getElementById("scoreSheetContent");
   if (!container) return;
-  if (!state.history.length) {
-    container.textContent = "まだスコアがありません";
-    return;
-  }
-  const last = state.history[state.history.length - 1];
+  const last =
+    state.history.length > 0
+      ? state.history[state.history.length - 1]
+      : {
+          setNo: state.scores.setNo,
+          scoreA: state.scores.A,
+          scoreB: state.scores.B,
+          names: {
+            A: state.displayOrder.A.map((k) => state.players.A[k]),
+            B: state.displayOrder.B.map((k) => state.players.B[k]),
+          },
+          inProgress: true,
+        };
   container.innerHTML = `
-    <div><strong>セット数:</strong> ${state.history.length}</div>
-    <div><strong>最終セット:</strong> ${last.scoreA} - ${last.scoreB}</div>
+    <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
+    <div><strong>${last.inProgress ? "進行中セット" : "最終セット"}:</strong> ${last.scoreA} - ${last.scoreB}</div>
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
   `;
 }
