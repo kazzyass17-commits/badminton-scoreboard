@@ -269,6 +269,7 @@ function assignPlayerToSlot(name, slot) {
   const order = state.displayOrder[side];
   const key = order[index];
   state.players[side][key] = name;
+  ensurePlayerInDB(name);
   setStatus("名前更新");
   syncUI();
   saveState();
@@ -277,11 +278,20 @@ function assignPlayerToSlot(name, slot) {
 function addPlayerToDB() {
   const name = controls.dbNameInput?.value.trim();
   if (!name) return;
-  state.playerDB.push({ name });
+  ensurePlayerInDB(name);
   controls.dbNameInput.value = "";
   setStatus("選手追加");
   renderPlayerDB();
   saveState();
+}
+
+function ensurePlayerInDB(name) {
+  if (!name) return;
+  const exists = state.playerDB.some((p) => p.name === name);
+  if (!exists) {
+    state.playerDB.push({ name });
+    renderPlayerDB();
+  }
 }
 
 function isSetFinished() {
@@ -512,7 +522,9 @@ function bindEvents() {
   const nameHandler = (side, slot) => (e) => {
     const order = state.displayOrder[side];
     const memberKey = order[slot];
-    state.players[side][memberKey] = e.target.value;
+    const val = e.target.value;
+    state.players[side][memberKey] = val;
+    ensurePlayerInDB(val.trim());
     setStatus("名前更新");
     saveState();
   };
