@@ -209,6 +209,18 @@ function setInitialServeFromUI(value) {
   saveState();
 }
 
+function setServeSide(side) {
+  state.initialServeSide = side;
+  if (state.scores.A === 0 && state.scores.B === 0) {
+    state.serving = { side, member: "1" };
+    state.lastServer[side] = "1";
+    state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+    state.initialServeApplied = false;
+    updateServeUI();
+  }
+  saveState();
+}
+
 function renderHistory() {
   const list = controls.historyList;
   if (state.history.length === 0) {
@@ -410,10 +422,8 @@ function resolveServerAfterPoint(scoringSide, previousServingSide) {
         state.displayOrder.B.reverse();
         swapPositions("B");
         return state.serving;
-      } else {
-        // A得点: B1/B2は入れ替えず、サーブ権をA2へ
-        return { side: "A", member: "2" };
       }
+      // A得点: 特例なしで通常ロジックへ
     }
     // initialServeSide が A の場合は現行ロジックへ落ちる
   }
@@ -642,7 +652,8 @@ function bindEvents() {
   });
 
   controls.serveSide.forEach((r) => {
-    r.addEventListener("change", () => {
+    r.addEventListener("change", (e) => {
+      setServeSide(e.target.value);
       setStatus("サーブ権表示のみ更新");
     });
   });
