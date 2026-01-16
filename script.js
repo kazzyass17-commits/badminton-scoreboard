@@ -258,7 +258,20 @@ function renderPlayerDB() {
     const name = document.createElement("div");
     name.className = "player-name";
     name.textContent = p.name;
+    const actions = document.createElement("div");
+    actions.className = "player-actions";
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn micro";
+    editBtn.textContent = "編集";
+    editBtn.addEventListener("click", () => editPlayerName(p.name));
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn micro danger";
+    delBtn.textContent = "削除";
+    delBtn.addEventListener("click", () => deletePlayer(p.name));
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
     row.appendChild(name);
+    row.appendChild(actions);
     list.appendChild(row);
   });
 }
@@ -292,6 +305,38 @@ function ensurePlayerInDB(name) {
     state.playerDB.push({ name });
     renderPlayerDB();
   }
+}
+
+function deletePlayer(name) {
+  state.playerDB = state.playerDB.filter((p) => p.name !== name);
+  // 割り当て済みの同名を空にする
+  ["A", "B"].forEach((side) => {
+    Object.keys(state.players[side]).forEach((k) => {
+      if (state.players[side][k] === name) state.players[side][k] = "";
+    });
+  });
+  setStatus("選手削除");
+  syncUI();
+  saveState();
+}
+
+function editPlayerName(oldName) {
+  const newName = prompt("新しい名前を入力", oldName)?.trim();
+  if (!newName || newName === oldName) return;
+  if (state.playerDB.some((p) => p.name === newName)) {
+    alert("同名が既に登録されています");
+    return;
+  }
+  state.playerDB = state.playerDB.map((p) => (p.name === oldName ? { name: newName } : p));
+  // 割り当て済みを置換
+  ["A", "B"].forEach((side) => {
+    Object.keys(state.players[side]).forEach((k) => {
+      if (state.players[side][k] === oldName) state.players[side][k] = newName;
+    });
+  });
+  setStatus("選手名更新");
+  syncUI();
+  saveState();
 }
 
 function isSetFinished() {
@@ -519,20 +564,25 @@ function bindEvents() {
     });
   });
 
-  const nameHandler = (side, slot) => (e) => {
+  const nameInputHandler = (side, slot) => (e) => {
     const order = state.displayOrder[side];
     const memberKey = order[slot];
-    const val = e.target.value;
-    state.players[side][memberKey] = val;
-    ensurePlayerInDB(val.trim());
+    state.players[side][memberKey] = e.target.value;
     setStatus("名前更新");
     saveState();
   };
+  const nameBlurHandler = (side, slot) => (e) => {
+    ensurePlayerInDB(e.target.value.trim());
+  };
 
-  controls.nameA1.addEventListener("input", nameHandler("A", 0)); // 上段
-  controls.nameA2.addEventListener("input", nameHandler("A", 1)); // 下段
-  controls.nameB1.addEventListener("input", nameHandler("B", 0)); // 上段
-  controls.nameB2.addEventListener("input", nameHandler("B", 1)); // 下段
+  controls.nameA1.addEventListener("input", nameInputHandler("A", 0)); // 上段
+  controls.nameA2.addEventListener("input", nameInputHandler("A", 1)); // 下段
+  controls.nameB1.addEventListener("input", nameInputHandler("B", 0)); // 上段
+  controls.nameB2.addEventListener("input", nameInputHandler("B", 1)); // 下段
+  controls.nameA1.addEventListener("blur", nameBlurHandler("A", 0));
+  controls.nameA2.addEventListener("blur", nameBlurHandler("A", 1));
+  controls.nameB1.addEventListener("blur", nameBlurHandler("B", 0));
+  controls.nameB2.addEventListener("blur", nameBlurHandler("B", 1));
 
   controls.initialServe.forEach((r) => {
     r.addEventListener("change", (e) => {

@@ -405,6 +405,16 @@ body {
   font-weight: 600;
 }
 
+.player-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn.micro {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
 .footer {
   text-align: center;
   color: var(--muted);
