@@ -160,6 +160,9 @@ body {
 .serve-faint {
   opacity: 0.5;
 }
+.serve-faint.active {
+  opacity: 1;
+}
 
 .radio-group {
   display: flex;

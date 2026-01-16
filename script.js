@@ -704,4 +704,7 @@ function updateServeRadioState() {
   controls.serveSide.forEach((r) => {
     r.disabled = !atStart;
   });
+  document.querySelectorAll(".serve-faint").forEach((el) => {
+    el.classList.toggle("active", atStart);
+  });
 }
