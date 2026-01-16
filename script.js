@@ -44,6 +44,8 @@ const defaultState = () => ({
   pointLog: [], // [{ side, serving, positions, scores }]
   history: [],
   serving: { side: "A", member: "1" },
+  initialServeSide: "A", // ラジオ選択保持（0-0時のみ効く）
+  initialServeApplied: false, // 0-0から動いたかどうか
   positions: {
     A: { right: "1", left: "2" }, // サーブサイドのローテーション用
     B: { right: "1", left: "2" },
@@ -119,6 +121,12 @@ function migrate(data) {
   }
   // displayOrderは新デフォルトに揃える（A:上p2/下p1, B:上p1/下p2）
   next.displayOrder = defaultDisplayOrder();
+  if (!data?.initialServeSide) {
+    next.initialServeSide = "A";
+  }
+  if (data?.initialServeApplied === undefined) {
+    next.initialServeApplied = false;
+  }
   if (!Array.isArray(data?.playerDB)) {
     next.playerDB = [];
   }
@@ -145,6 +153,9 @@ function syncUI() {
   });
   controls.allowDeuce.forEach((r) => {
     r.checked = (r.value === "true") === state.settings.allowDeuce;
+  });
+  controls.serveSide?.forEach((r) => {
+    r.checked = r.value === state.initialServeSide;
   });
 
   const setInputs = (side, inputs) => {
@@ -192,6 +203,8 @@ function setInitialServeFromUI(value) {
   state.serving = { side, member };
   state.lastServer[side] = member;
   state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
+  state.initialServeSide = side;
+  state.initialServeApplied = false;
   updateServeUI();
   saveState();
 }
@@ -374,6 +387,12 @@ function updateServeUI() {
       inputs[idx].classList.add("serving");
     }
   });
+  // サーブ権ラジオの見た目同期（ロジックは使わない）
+  controls.serveSide?.forEach((r) => {
+    if (r.value === state.initialServeSide) {
+      r.checked = true;
+    }
+  });
 }
 
 function swapPositions(side) {
@@ -382,6 +401,23 @@ function swapPositions(side) {
 }
 
 function resolveServerAfterPoint(scoringSide, previousServingSide) {
+  // 0-0から初めての得点時だけ初期サーブ側の特例を処理
+  if (!state.initialServeApplied && state.scores.A === 0 && state.scores.B === 0) {
+    state.initialServeApplied = true;
+    if (state.initialServeSide === "B") {
+      if (scoringSide === "B") {
+        // B得点: B1/B2入替え、Bに加点（呼び出し側で加点済み）、サーブ継続（B側）
+        state.displayOrder.B.reverse();
+        swapPositions("B");
+        return state.serving;
+      } else {
+        // A得点: B1/B2は入れ替えず、サーブ権をA2へ
+        return { side: "A", member: "2" };
+      }
+    }
+    // initialServeSide が A の場合は現行ロジックへ落ちる
+  }
+
   if (scoringSide === previousServingSide) {
     // サーブ側が得点: 同じプレイヤーがサーブ継続し、左右を入れ替える
     swapPositions(scoringSide);
@@ -419,6 +455,7 @@ function addPoint(side) {
       B: [...state.displayOrder.B],
     },
     setNo: state.scores.setNo,
+    initialServeApplied: state.initialServeApplied,
   };
   const prevServingSide = state.serving.side;
   state.pointLog.push(snapshot);
@@ -444,6 +481,7 @@ function undoLastPoint() {
       state.lastServer = lastAutoFinishSnapshot.lastServer;
       state.displayOrder = lastAutoFinishSnapshot.displayOrder;
       state.scores.setNo = lastAutoFinishSnapshot.setNo;
+      state.initialServeApplied = lastAutoFinishSnapshot.initialServeApplied;
       lastAutoFinishSnapshot = null;
       state.history.pop(); // 自動保存されたセットを取り消す
       setStatus("自動終了を取り消し");
@@ -458,6 +496,7 @@ function undoLastPoint() {
   state.scores = snap.scores;
   state.lastServer = snap.lastServer;
   state.displayOrder = snap.displayOrder;
+  state.initialServeApplied = snap.initialServeApplied;
   setStatus("編集中");
   syncUI();
   saveState();
@@ -483,6 +522,8 @@ function finishSet(auto = false) {
     const winnerSide = entry.scoreA > entry.scoreB ? "A" : "B";
     advanceToNextSet(winnerSide);
     state.pointLog = [];
+    state.initialServeApplied = false;
+    state.initialServeSide = "A"; // 以降の初期値はA
     setStatus("セット自動終了");
     syncUI();
     saveState();
@@ -498,6 +539,8 @@ function advanceToNextSet(winnerSide) {
   state.lastServer[winnerSide] = "1";
   state.positions = { A: { right: "1", left: "2" }, B: { right: "1", left: "2" } };
   state.displayOrder = defaultDisplayOrder();
+  state.initialServeApplied = false;
+  state.initialServeSide = "A";
 }
 
 function resetAll() {
@@ -512,6 +555,8 @@ function resetAll() {
   // 履歴もリセット
   state.pointLog = [];
   lastAutoFinishSnapshot = null;
+  state.initialServeApplied = false;
+  state.initialServeSide = "A";
   setStatus("リセット（名前以外リセット）");
   syncUI();
   saveState();
@@ -520,6 +565,8 @@ function resetAll() {
 function hardResetAll() {
   state = defaultState();
   lastAutoFinishSnapshot = null;
+  state.initialServeApplied = false;
+  state.initialServeSide = "A";
   setStatus("全リセット");
   syncUI();
   saveState();
