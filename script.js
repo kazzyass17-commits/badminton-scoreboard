@@ -250,6 +250,11 @@ function renderPlayerDB() {
   state.playerDB.forEach((p) => {
     const row = document.createElement("div");
     row.className = "player-row";
+    row.setAttribute("draggable", "true");
+    row.dataset.name = p.name;
+    row.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", p.name);
+    });
     const name = document.createElement("div");
     name.className = "player-name";
     name.textContent = p.name;
@@ -552,6 +557,26 @@ function bindEvents() {
       }
     });
   }
+
+  const makeDropHandler = (side, index) => (e) => {
+    e.preventDefault();
+    const name = e.dataTransfer?.getData("text/plain");
+    if (!name) return;
+    assignPlayerToSlot(name, `${side}${index}`);
+  };
+  const makeDragOver = (e) => {
+    e.preventDefault();
+  };
+  [
+    { el: controls.nameA1, side: "A", idx: 0 },
+    { el: controls.nameA2, side: "A", idx: 1 },
+    { el: controls.nameB1, side: "B", idx: 0 },
+    { el: controls.nameB2, side: "B", idx: 1 },
+  ].forEach(({ el, side, idx }) => {
+    if (!el) return;
+    el.addEventListener("dragover", makeDragOver);
+    el.addEventListener("drop", makeDropHandler(side, idx));
+  });
 }
 
 function init() {
