@@ -18,12 +18,12 @@ const controls = {
   historyList: $("historyList"),
   buttons: document.querySelectorAll("button[data-side]"),
   undo: $("btnUndo"),
-  softReset: $("btnSoftReset"),
   hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
+  dbReset: $("btnDbReset"),
 };
 
 const defaultDisplayOrder = () => ({
@@ -554,37 +554,39 @@ function advanceToNextSet(winnerSide) {
 }
 
 function resetAll() {
-  // 名前と設定を保持し、それ以外をリセット
-  const preservedPlayers = {
-    A: { ...state.players.A },
-    B: { ...state.players.B },
-  };
+  // 選手DBを保持し、それ以外をリセット。名前は初期化。
+  const preservedDB = [...state.playerDB];
   state = defaultState();
-  state.players = preservedPlayers;
-  // 設定は初期化する
-  // 履歴もリセット
-  state.pointLog = [];
+  state.playerDB = preservedDB;
   lastAutoFinishSnapshot = null;
   state.initialServeApplied = false;
   state.initialServeSide = "A";
-  setStatus("リセット（名前以外リセット）");
+  setStatus("全リセット（DB保持）");
   syncUI();
   saveState();
 }
 
 function hardResetAll() {
-  state = defaultState();
-  lastAutoFinishSnapshot = null;
-  state.initialServeApplied = false;
-  state.initialServeSide = "A";
-  setStatus("全リセット");
-  syncUI();
-  saveState();
+  // 全リセットボタンでもDBは保持する仕様に変更
+  resetAll();
 }
 
 function clearHistory() {
   state.history = [];
   setStatus("履歴クリア");
+  syncUI();
+  saveState();
+}
+
+function resetPlayerDB() {
+  state.playerDB = [];
+  // 割当名も空にする
+  ["A", "B"].forEach((side) => {
+    Object.keys(state.players[side]).forEach((k) => {
+      state.players[side][k] = "";
+    });
+  });
+  setStatus("選手DBリセット");
   syncUI();
   saveState();
 }
@@ -595,15 +597,17 @@ function bindEvents() {
   });
 
   controls.undo.addEventListener("click", undoLastPoint);
-  controls.softReset.addEventListener("click", () => {
-    if (confirm("名前以外のデータを初期化しますか？")) resetAll();
-  });
   controls.hardReset.addEventListener("click", () => {
     if (confirm("全データ（名前含む）を初期化しますか？")) hardResetAll();
   });
   controls.clearHistory.addEventListener("click", () => {
     if (confirm("セット履歴を消去しますか？")) clearHistory();
   });
+  if (controls.dbReset) {
+    controls.dbReset.addEventListener("click", () => {
+      if (confirm("選手DBを初期化しますか？（名前割当も空になります）")) resetPlayerDB();
+    });
+  }
 
   controls.targetPoints.forEach((r) => {
     r.addEventListener("change", (e) => {
