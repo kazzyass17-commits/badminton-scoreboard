@@ -16,7 +16,7 @@
     <div class="status-pill" id="storageStatus">未保存</div>
   </header>
 
-  <main>
+  <main class="layout">
     <section class="card settings-card">
       <div class="setting-row compact">
         <div class="setting-inline">
@@ -94,6 +94,17 @@
         <button class="btn ghost" id="clearHistoryBtn">履歴クリア</button>
       </div>
       <div id="historyList" class="history-list empty">まだセットがありません</div>
+    </section>
+
+    <section class="card playerdb-card">
+      <div class="playerdb-header">
+        <h2>選手DB</h2>
+        <div class="playerdb-add">
+          <input id="dbNameInput" type="text" placeholder="名前を追加" autocomplete="off" />
+          <button class="btn tiny" id="dbAddBtn">追加</button>
+        </div>
+      </div>
+      <div id="playerDbList" class="playerdb-list empty">まだ登録がありません</div>
     </section>
 
     <footer class="footer">

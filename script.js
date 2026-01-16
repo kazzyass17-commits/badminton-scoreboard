@@ -20,6 +20,9 @@ const controls = {
   softReset: $("btnSoftReset"),
   hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
+  dbNameInput: $("dbNameInput"),
+  dbAddBtn: $("dbAddBtn"),
+  playerDbList: $("playerDbList"),
 };
 
 const defaultDisplayOrder = () => ({
@@ -46,6 +49,7 @@ const defaultState = () => ({
   },
   lastServer: { A: "1", B: "1" },
   displayOrder: defaultDisplayOrder(),
+  playerDB: [],
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -114,6 +118,9 @@ function migrate(data) {
   }
   // displayOrderは新デフォルトに揃える（A:上p2/下p1, B:上p1/下p2）
   next.displayOrder = defaultDisplayOrder();
+  if (!Array.isArray(data?.playerDB)) {
+    next.playerDB = [];
+  }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
     next.pointLog = [];
@@ -152,6 +159,7 @@ function syncUI() {
   syncServeSelector();
   updateServeUI();
   renderHistory();
+  renderPlayerDB();
 }
 
 function canChangeInitialServe() {
@@ -227,6 +235,64 @@ function renderHistory() {
       row.appendChild(right);
       list.appendChild(row);
     });
+}
+
+function renderPlayerDB() {
+  const list = controls.playerDbList;
+  if (!list) return;
+  if (!state.playerDB.length) {
+    list.classList.add("empty");
+    list.textContent = "まだ登録がありません";
+    return;
+  }
+  list.classList.remove("empty");
+  list.textContent = "";
+  state.playerDB.forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "player-row";
+    const name = document.createElement("div");
+    name.className = "player-name";
+    name.textContent = p.name;
+    const btns = document.createElement("div");
+    btns.className = "assign-buttons";
+    const slots = [
+      { slot: "A0", label: "A上" },
+      { slot: "A1", label: "A下" },
+      { slot: "B0", label: "B上" },
+      { slot: "B1", label: "B下" },
+    ];
+    slots.forEach(({ slot, label }) => {
+      const btn = document.createElement("button");
+      btn.className = "btn micro";
+      btn.textContent = label;
+      btn.addEventListener("click", () => assignPlayerToSlot(p.name, slot));
+      btns.appendChild(btn);
+    });
+    row.appendChild(name);
+    row.appendChild(btns);
+    list.appendChild(row);
+  });
+}
+
+function assignPlayerToSlot(name, slot) {
+  const side = slot.startsWith("A") ? "A" : "B";
+  const index = slot.endsWith("0") ? 0 : 1;
+  const order = state.displayOrder[side];
+  const key = order[index];
+  state.players[side][key] = name;
+  setStatus("名前更新");
+  syncUI();
+  saveState();
+}
+
+function addPlayerToDB() {
+  const name = controls.dbNameInput?.value.trim();
+  if (!name) return;
+  state.playerDB.push({ name });
+  controls.dbNameInput.value = "";
+  setStatus("選手追加");
+  renderPlayerDB();
+  saveState();
 }
 
 function isSetFinished() {
@@ -474,6 +540,18 @@ function bindEvents() {
       setStatus("開始サーブ変更");
     });
   });
+
+  if (controls.dbAddBtn) {
+    controls.dbAddBtn.addEventListener("click", addPlayerToDB);
+  }
+  if (controls.dbNameInput) {
+    controls.dbNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addPlayerToDB();
+      }
+    });
+  }
 }
 
 function init() {

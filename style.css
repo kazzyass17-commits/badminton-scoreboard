@@ -27,10 +27,13 @@ body {
   min-height: 100vh;
 }
 
-main {
+.layout {
   padding: 16px;
-  max-width: 720px;
+  max-width: 1180px;
   margin: 0 auto 32px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
 }
 
 .app-header {
@@ -323,6 +326,70 @@ main {
   padding: 16px 0;
 }
 
+.playerdb-card .playerdb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.playerdb-add {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.playerdb-add input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.playerdb-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.playerdb-list.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.player-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.assign-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 6px;
+}
+
+.btn.micro {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
 .footer {
   text-align: center;
   color: var(--muted);
@@ -331,6 +398,9 @@ main {
 }
 
 @media (max-width: 520px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
   .scores {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
@@ -349,6 +419,9 @@ main {
 }
 
 @media (orientation: landscape) and (max-width: 820px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
   .app-header h1 {
     font-size: 18px;
   }
