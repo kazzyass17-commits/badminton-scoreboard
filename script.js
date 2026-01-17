@@ -255,7 +255,8 @@ function renderHistory() {
       title.textContent = `セット ${item.setNo}: ${item.scoreA} - ${item.scoreB}`;
       const meta = document.createElement("div");
       meta.className = "meta";
-      const serverTxt = item.server ? ` / サーブ: ${item.server.side}${item.server.member}` : "";
+      const serveSide = item.serveSide ?? "A";
+      const serverTxt = ` / サーブ: ${serveSide}1`;
       meta.textContent = `ポイント${item.target} / セッティング${item.allowDeuce ? "有" : "無"}${serverTxt}`;
       const names = document.createElement("div");
       names.className = "meta";
@@ -549,6 +550,7 @@ function finishSet(auto = false) {
     server: state.serving,
     names,
     rallies: [...state.rallies],
+    serveSide: state.initialServeSide,
     initialServeSide: state.initialServeSide,
     endedAt: Date.now(),
   };
@@ -778,21 +780,18 @@ function syncView() {
 function renderScoreSheet() {
   const container = document.getElementById("scoreSheetContent");
   if (!container) return;
-  const last =
-    state.history.length > 0
-      ? state.history[state.history.length - 1]
-      : {
-          setNo: state.scores.setNo,
-          scoreA: state.scores.A,
-          scoreB: state.scores.B,
-          names: {
-            A: state.displayOrder.A.map((k) => state.players.A[k]),
-            B: state.displayOrder.B.map((k) => state.players.B[k]),
-          },
-          rallies: state.rallies,
-          initialServeSide: state.initialServeSide,
-          inProgress: true,
-        };
+  const last = {
+    setNo: state.scores.setNo,
+    scoreA: state.scores.A,
+    scoreB: state.scores.B,
+    names: {
+      A: state.displayOrder.A.map((k) => state.players.A[k]),
+      B: state.displayOrder.B.map((k) => state.players.B[k]),
+    },
+    rallies: state.rallies,
+    initialServeSide: state.initialServeSide,
+    inProgress: true,
+  };
 
   // サーバーごとに、そのサーブ権で得点したときの「得点後の値」をラリー順に並べ、空欄も保持する
   const namesNow = {
@@ -850,7 +849,7 @@ function renderScoreSheet() {
 
   container.innerHTML = `
     <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
-    <div><strong>${last.inProgress ? "進行中セット" : "最終セット"}:</strong> ${last.scoreA} - ${last.scoreB}</div>
+    <div><strong>進行中セット:</strong> ${last.scoreA} - ${last.scoreB}</div>
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
       ${tables}
