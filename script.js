@@ -786,17 +786,17 @@ function renderScoreSheet() {
           inProgress: true,
         };
 
-  // サーバーごとにラリー番号を縦に並べる
+  // サーバーごとにラリー進行の「現得点」を左から右へ並べる
   const namesNow = {
-    A1: state.players.A[state.displayOrder.A[0]],
-    A2: state.players.A[state.displayOrder.A[1]],
-    B1: state.players.B[state.displayOrder.B[0]],
-    B2: state.players.B[state.displayOrder.B[1]],
+    A1: last.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
+    A2: last.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
+    B1: last.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
+    B2: last.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
   };
   const buckets = { A1: [], A2: [], B1: [], B2: [] };
   (last.rallies ?? []).forEach((r) => {
     const srv = r.server ?? "";
-    if (buckets[srv]) buckets[srv].push(r.rally);
+    if (buckets[srv]) buckets[srv].push(`${r.scoreA}-${r.scoreB}`);
   });
   const rows = [
     { key: "A1", label: namesNow.A1 || "A1" },
