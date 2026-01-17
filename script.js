@@ -795,35 +795,6 @@ function syncView() {
 function renderScoreSheet() {
   const container = document.getElementById("scoreSheetContent");
   if (!container) return;
-  const calcChunkSize = () => {
-    const measureTable = document.createElement("table");
-    measureTable.className = "sheet-table";
-    measureTable.style.visibility = "hidden";
-    measureTable.style.position = "absolute";
-    measureTable.style.left = "-9999px";
-    measureTable.style.top = "-9999px";
-    const tbody = document.createElement("tbody");
-    const tr = document.createElement("tr");
-    const nameCell = document.createElement("td");
-    nameCell.textContent = "名前";
-    const scoreCell = document.createElement("td");
-    scoreCell.className = "score-cell";
-    scoreCell.textContent = "00";
-    tr.appendChild(nameCell);
-    tr.appendChild(scoreCell);
-    tbody.appendChild(tr);
-    measureTable.appendChild(tbody);
-    container.appendChild(measureTable);
-    const nameWidth = nameCell.getBoundingClientRect().width;
-    const cellWidth = scoreCell.getBoundingClientRect().width;
-    const spacing = getComputedStyle(measureTable).borderSpacing.split(" ");
-    const gapX = Number.parseFloat(spacing[0]) || 0;
-    const available = container.getBoundingClientRect().width - nameWidth;
-    measureTable.remove();
-    const perCell = cellWidth + gapX;
-    if (perCell <= 0 || available <= 0) return 14;
-    return Math.max(6, Math.floor(available / perCell));
-  };
   const last = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -844,6 +815,40 @@ function renderScoreSheet() {
     B1: last.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
     B2: last.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
   };
+  const calcChunkSize = (labels) => {
+    const measureTable = document.createElement("table");
+    measureTable.className = "sheet-table";
+    measureTable.style.visibility = "hidden";
+    measureTable.style.position = "absolute";
+    measureTable.style.left = "-9999px";
+    measureTable.style.top = "-9999px";
+    const tbody = document.createElement("tbody");
+    const scoreCell = document.createElement("td");
+    scoreCell.className = "score-cell";
+    scoreCell.textContent = "00";
+    labels.forEach((label) => {
+      const tr = document.createElement("tr");
+      const nameCell = document.createElement("td");
+      nameCell.textContent = label;
+      tr.appendChild(nameCell);
+      tr.appendChild(scoreCell.cloneNode(true));
+      tbody.appendChild(tr);
+    });
+    measureTable.appendChild(tbody);
+    container.appendChild(measureTable);
+    let nameWidth = 0;
+    tbody.querySelectorAll("td:first-child").forEach((td) => {
+      nameWidth = Math.max(nameWidth, td.getBoundingClientRect().width);
+    });
+    const cellWidth = measureTable.querySelector(".score-cell").getBoundingClientRect().width;
+    const spacing = getComputedStyle(measureTable).borderSpacing.split(" ");
+    const gapX = Number.parseFloat(spacing[0]) || 0;
+    const available = container.clientWidth - nameWidth;
+    measureTable.remove();
+    const perCell = cellWidth + gapX;
+    if (perCell <= 0 || available <= 0) return 10;
+    return Math.max(4, Math.floor(available / perCell));
+  };
   const maxRally = last.rallies?.length ?? 0;
   const initialKey = `${last.initialServeSide ?? state.initialServeSide ?? "A"}1`;
   const buckets = {
@@ -858,7 +863,13 @@ function renderScoreSheet() {
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
   });
-  const chunkSize = calcChunkSize();
+  const labels = [
+    namesNow.A1 || "A1",
+    namesNow.A2 || "A2",
+    namesNow.B1 || "B1",
+    namesNow.B2 || "B2",
+  ];
+  const chunkSize = calcChunkSize(labels);
   const chunkCount = Math.max(1, Math.ceil((maxRally + 1) / chunkSize));
   const rowsForRange = (start, end) =>
     [
