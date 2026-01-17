@@ -450,7 +450,10 @@ body {
 }
 
 .sheet-table {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  display: inline-table; /* コンテンツ幅に縮めて左寄せ */
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0 0; /* 点数間の間隔はpaddingで制御 */
 }
