@@ -461,7 +461,7 @@ body {
 
 .sheet-table th,
 .sheet-table td {
-  padding: 4px 1px;
+  padding: 0;
   text-align: left;
   white-space: nowrap;
 }
@@ -474,8 +474,10 @@ body {
 
 .sheet-table .score-cell {
   text-align: center;
-  padding: 2px 0.2em; /* 点数間隔をさらに狭く */
-  min-width: 0;
+  padding: 0; /* 余白を完全に除去 */
+  width: 1em; /* 点数幅を1文字分に固定 */
+  min-width: 1em;
+  line-height: 1.1;
 }
 
 .sheet-sep td {
