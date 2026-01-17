@@ -18,12 +18,12 @@ const controls = {
   historyList: $("historyList"),
   buttons: document.querySelectorAll("button[data-side]"),
   undo: $("btnUndo"),
+  undoBottom: $("btnUndoBottom"),
   hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
-  dbReset: $("btnDbReset"),
   shareSheet: document.getElementById("btnShareSheet"),
 };
 
@@ -604,19 +604,6 @@ function clearHistory() {
   saveState();
 }
 
-function resetPlayerDB() {
-  state.playerDB = [];
-  // 割当名も空にする
-  ["A", "B"].forEach((side) => {
-    Object.keys(state.players[side]).forEach((k) => {
-      state.players[side][k] = "";
-    });
-  });
-  state.rallies = [];
-  setStatus("選手リストリセット");
-  syncUI();
-  saveState();
-}
 
 function bindEvents() {
   controls.buttons.forEach((btn) => {
@@ -624,17 +611,15 @@ function bindEvents() {
   });
 
   controls.undo.addEventListener("click", undoLastPoint);
+  if (controls.undoBottom) {
+    controls.undoBottom.addEventListener("click", undoLastPoint);
+  }
   controls.hardReset.addEventListener("click", () => {
     if (confirm("全データ（名前含む）を初期化しますか？")) hardResetAll();
   });
   controls.clearHistory.addEventListener("click", () => {
     if (confirm("セット履歴を消去しますか？")) clearHistory();
   });
-  if (controls.dbReset) {
-    controls.dbReset.addEventListener("click", () => {
-      if (confirm("選手リストを初期化しますか？（名前割当も空になります）")) resetPlayerDB();
-    });
-  }
 
   controls.targetPoints.forEach((r) => {
     r.addEventListener("change", (e) => {
@@ -811,33 +796,45 @@ function renderScoreSheet() {
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
   });
-  const rows = [
-    { key: "A1", label: namesNow.A1 || "A1" },
-    { key: "A2", label: namesNow.A2 || "A2" },
-    { sep: true },
-    { key: "B1", label: namesNow.B1 || "B1" },
-    { key: "B2", label: namesNow.B2 || "B2" },
-  ]
-    .map((row) => {
-      if (row.sep) {
-        const span = maxRally + 2;
-        return `<tr class="sheet-sep"><td colspan="${span}"></td></tr>`;
-      }
-      const cells = buckets[row.key]
-        .map((v) => `<td class="score-cell">${v || "&nbsp;"}</td>`)
-        .join("");
-      return `<tr><td>${row.label}</td>${cells}</tr>`;
-    })
-    .join("");
+  const chunkSize = 10;
+  const chunkCount = Math.max(1, Math.ceil((maxRally + 1) / chunkSize));
+  const rowsForRange = (start, end) =>
+    [
+      { key: "A1", label: namesNow.A1 || "A1" },
+      { key: "A2", label: namesNow.A2 || "A2" },
+      { sep: true },
+      { key: "B1", label: namesNow.B1 || "B1" },
+      { key: "B2", label: namesNow.B2 || "B2" },
+    ]
+      .map((row) => {
+        if (row.sep) {
+          const span = end - start + 2;
+          return `<tr class="sheet-sep"><td colspan="${span}"></td></tr>`;
+        }
+        const cells = buckets[row.key]
+          .slice(start, end + 1)
+          .map((v) => `<td class="score-cell">${v || "&nbsp;"}</td>`)
+          .join("");
+        const labelCell = start === 0 ? `<td>${row.label}</td>` : `<td>&nbsp;</td>`;
+        return `<tr>${labelCell}${cells}</tr>`;
+      })
+      .join("");
+  const tables = Array.from({ length: chunkCount }, (_, i) => {
+    const start = i * chunkSize;
+    const end = Math.min(maxRally, start + chunkSize - 1);
+    return `
+      <table class="sheet-table">
+        <tbody>${rowsForRange(start, end)}</tbody>
+      </table>
+    `;
+  }).join("");
 
   container.innerHTML = `
     <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
     <div><strong>${last.inProgress ? "進行中セット" : "最終セット"}:</strong> ${last.scoreA} - ${last.scoreB}</div>
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
-      <table class="sheet-table">
-        <tbody>${rows}</tbody>
-      </table>
+      ${tables}
     </div>
   `;
 }
