@@ -442,14 +442,14 @@ body {
 
 .sheet-table th,
 .sheet-table td {
-  padding: 4px 3px;
+  padding: 6px 6px;
   text-align: left;
 }
 
 .sheet-table .name-cell {
-  width: 14%;
+  width: 18%;
   white-space: nowrap;
-  padding-right: 4px;
+  padding-right: 8px;
 }
 
 .footer {
