@@ -578,14 +578,14 @@ function advanceToNextSet(winnerSide) {
 }
 
 function resetAll() {
-  // 選手DBを保持し、それ以外をリセット。名前は初期化。
+  // 選手リストを保持し、それ以外をリセット。名前は初期化。
   const preservedDB = [...state.playerDB];
   state = defaultState();
   state.playerDB = preservedDB;
   lastAutoFinishSnapshot = null;
   state.initialServeApplied = false;
   state.initialServeSide = "A";
-  setStatus("全リセット（DB保持）");
+  setStatus("全リセット（リスト保持）");
   syncUI();
   saveState();
 }
@@ -611,7 +611,7 @@ function resetPlayerDB() {
     });
   });
   state.rallies = [];
-  setStatus("選手DBリセット");
+  setStatus("選手リストリセット");
   syncUI();
   saveState();
 }
@@ -630,7 +630,7 @@ function bindEvents() {
   });
   if (controls.dbReset) {
     controls.dbReset.addEventListener("click", () => {
-      if (confirm("選手DBを初期化しますか？（名前割当も空になります）")) resetPlayerDB();
+      if (confirm("選手リストを初期化しますか？（名前割当も空になります）")) resetPlayerDB();
     });
   }
 
