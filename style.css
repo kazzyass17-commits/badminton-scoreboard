@@ -32,13 +32,19 @@ body {
   max-width: 1180px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: minmax(620px, 3fr) minmax(200px, 1.2fr);
+  grid-template-columns: 100px minmax(520px, 3fr) minmax(200px, 1.2fr);
   grid-template-areas:
-    "settings playerdb"
-    "scoreboard playerdb"
-    "history playerdb"
-    "footer footer";
+    "toggle settings playerdb"
+    "toggle scoreboard playerdb"
+    "toggle history playerdb"
+    "footer footer footer";
   gap: 16px;
+}
+
+.toggle-col {
+  grid-area: toggle;
+  display: flex;
+  justify-content: center;
 }
 
 .settings-card {
@@ -323,7 +329,7 @@ body {
   white-space: normal;
   line-height: 1.2;
   text-align: center;
-  width: 92px;
+  width: 90px;
 }
 
 .history-card .history-header {
@@ -479,6 +485,7 @@ body {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas:
+      "toggle"
       "settings"
       "scoreboard"
       "history"
