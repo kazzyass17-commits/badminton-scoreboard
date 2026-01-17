@@ -829,15 +829,6 @@ function renderScoreSheet() {
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
       <table class="sheet-table">
-        <thead>
-          <tr>
-            <th class="name-cell">ラリー番号</th>
-            ${Array(maxRally + 1)
-              .fill(0)
-              .map((_, i) => `<th style="text-align:center;">${i === 0 ? "0" : i}</th>`)
-              .join("")}
-          </tr>
-        </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
