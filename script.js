@@ -24,6 +24,7 @@ const controls = {
   clearHistory: $("clearHistoryBtn"),
   historyPeek: $("btnHistoryPeek"),
   collapseLeft: $("btnCollapseLeft"),
+  collapseLeftInitial: $("btnCollapseLeftInitial"),
   expandLeft: $("btnExpandLeft"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
@@ -65,6 +66,7 @@ const defaultState = () => ({
   sheetSetIndex: null,
   leftCollapsed: false,
   historyPeek: false,
+  playerDbOpen: false,
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -156,6 +158,9 @@ function migrate(data) {
   }
   if (data?.historyPeek === undefined) {
     next.historyPeek = false;
+  }
+  if (data?.playerDbOpen === undefined) {
+    next.playerDbOpen = false;
   }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
@@ -813,9 +818,16 @@ function bindEvents() {
       saveState();
     });
   }
+  if (controls.collapseLeftInitial) {
+    controls.collapseLeftInitial.addEventListener("click", () => {
+      state.leftCollapsed = true;
+      updateLayoutVisibility();
+      saveState();
+    });
+  }
   if (controls.collapseLeft) {
     controls.collapseLeft.addEventListener("click", () => {
-      state.leftCollapsed = true;
+      state.playerDbOpen = true;
       updateLayoutVisibility();
       saveState();
     });
@@ -823,6 +835,7 @@ function bindEvents() {
   if (controls.expandLeft) {
     controls.expandLeft.addEventListener("click", () => {
       state.leftCollapsed = false;
+      state.playerDbOpen = false;
       updateLayoutVisibility();
       saveState();
     });
@@ -862,6 +875,7 @@ function updateLayoutVisibility() {
   const leftCol = document.querySelector(".left-col");
   if (layout) {
     layout.classList.toggle("left-collapsed", state.leftCollapsed);
+    layout.classList.toggle("playerdb-open", state.playerDbOpen);
   }
   if (leftCol) {
     leftCol.classList.toggle("hidden", state.leftCollapsed);
@@ -876,7 +890,7 @@ function updateLayoutVisibility() {
   }
   const playerDb = document.querySelector(".playerdb-card.view-board");
   if (playerDb) {
-    playerDb.classList.add("hidden");
+    playerDb.classList.toggle("hidden", !state.playerDbOpen);
   }
 }
 

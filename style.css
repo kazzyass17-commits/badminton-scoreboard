@@ -361,6 +361,10 @@ body {
   z-index: 30;
 }
 
+.left-collapse-btn {
+  margin-top: 4px;
+}
+
 .history-header {
   display: flex;
   align-items: center;
