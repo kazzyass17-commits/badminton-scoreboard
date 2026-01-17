@@ -338,7 +338,7 @@ body {
 }
 
 .history-list {
-  margin-top: 10px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -401,7 +401,7 @@ body {
 }
 
 .playerdb-list {
-  margin-top: 12px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -416,8 +416,8 @@ body {
 .player-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 2px;
+  padding: 4px 6px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
@@ -427,11 +427,12 @@ body {
 .player-name {
   flex: 1;
   font-weight: 600;
+  margin-right: 2px;
 }
 
 .player-actions {
   display: flex;
-  gap: 2px;
+  gap: 0;
 }
 
 .btn.micro {
