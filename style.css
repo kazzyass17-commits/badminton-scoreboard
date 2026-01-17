@@ -32,7 +32,7 @@ body {
   max-width: 1180px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 140px minmax(660px, 3fr) minmax(160px, 0.9fr);
+  grid-template-columns: 140px minmax(660px, 3fr) 0;
   grid-template-areas:
     "left settings playerdb"
     "left scoreboard playerdb"
@@ -42,12 +42,20 @@ body {
 }
 
 .layout.left-collapsed {
-  grid-template-columns: 0 minmax(660px, 3fr) minmax(160px, 0.9fr);
+  grid-template-columns: 0 minmax(660px, 3fr) 0;
   grid-template-areas:
     "settings settings playerdb"
     "scoreboard scoreboard playerdb"
     "history history playerdb"
     "footer footer footer";
+}
+
+.layout.playerdb-open {
+  grid-template-columns: 140px minmax(660px, 3fr) minmax(160px, 0.9fr);
+}
+
+.layout.left-collapsed.playerdb-open {
+  grid-template-columns: 0 minmax(660px, 3fr) minmax(160px, 0.9fr);
 }
 
 .left-col {
@@ -346,6 +354,13 @@ body {
   margin-top: 8px;
 }
 
+.collapse-left-btn {
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .collapse-right-btn {
   position: absolute;
   right: -12px;
@@ -353,17 +368,6 @@ body {
   transform: translateY(-50%);
 }
 
-.left-expand-btn {
-  position: fixed;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-}
-
-.left-collapse-btn {
-  margin-top: 4px;
-}
 
 .history-header {
   display: flex;

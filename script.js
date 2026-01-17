@@ -24,8 +24,7 @@ const controls = {
   clearHistory: $("clearHistoryBtn"),
   historyPeek: $("btnHistoryPeek"),
   collapseLeft: $("btnCollapseLeft"),
-  collapseLeftInitial: $("btnCollapseLeftInitial"),
-  expandLeft: $("btnExpandLeft"),
+  shiftRight: $("btnShiftRight"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -64,7 +63,7 @@ const defaultState = () => ({
   playerDB: [],
   viewMode: "board",
   sheetSetIndex: null,
-  leftCollapsed: false,
+  leftCollapsed: true,
   historyPeek: false,
   playerDbOpen: false,
   // Future tournament entities kept in state (UI非表示)
@@ -154,7 +153,7 @@ function migrate(data) {
     next.sheetSetIndex = null;
   }
   if (data?.leftCollapsed === undefined) {
-    next.leftCollapsed = false;
+    next.leftCollapsed = true;
   }
   if (data?.historyPeek === undefined) {
     next.historyPeek = false;
@@ -818,24 +817,16 @@ function bindEvents() {
       saveState();
     });
   }
-  if (controls.collapseLeftInitial) {
-    controls.collapseLeftInitial.addEventListener("click", () => {
-      state.leftCollapsed = true;
-      updateLayoutVisibility();
-      saveState();
-    });
-  }
   if (controls.collapseLeft) {
     controls.collapseLeft.addEventListener("click", () => {
-      state.playerDbOpen = true;
+      state.playerDbOpen = !state.playerDbOpen;
       updateLayoutVisibility();
       saveState();
     });
   }
-  if (controls.expandLeft) {
-    controls.expandLeft.addEventListener("click", () => {
-      state.leftCollapsed = false;
-      state.playerDbOpen = false;
+  if (controls.shiftRight) {
+    controls.shiftRight.addEventListener("click", () => {
+      state.leftCollapsed = !state.leftCollapsed;
       updateLayoutVisibility();
       saveState();
     });
@@ -879,9 +870,6 @@ function updateLayoutVisibility() {
   }
   if (leftCol) {
     leftCol.classList.toggle("hidden", state.leftCollapsed);
-  }
-  if (controls.expandLeft) {
-    controls.expandLeft.classList.toggle("hidden", !state.leftCollapsed);
   }
   const historyCard = document.querySelector(".history-card.view-board");
   if (historyCard) {
