@@ -41,6 +41,15 @@ body {
   gap: 16px;
 }
 
+.layout.left-collapsed {
+  grid-template-columns: 0 minmax(660px, 3fr) minmax(160px, 0.9fr);
+  grid-template-areas:
+    "settings settings playerdb"
+    "scoreboard scoreboard playerdb"
+    "history history playerdb"
+    "footer footer footer";
+}
+
 .left-col {
   grid-area: left;
   display: flex;
@@ -56,6 +65,7 @@ body {
 
 .scoreboard-card {
   grid-area: scoreboard;
+  position: relative;
 }
 
 .history-card {
@@ -330,6 +340,27 @@ body {
   margin-top: 0;
 }
 
+.scoreboard-peek {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.collapse-right-btn {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.left-expand-btn {
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+}
+
 .history-header {
   display: flex;
   align-items: center;
@@ -352,6 +383,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.history-card.history-peek .history-list {
+  max-height: 120px; /* 約1.5件分 */
+  overflow: hidden;
 }
 
 .history-item {

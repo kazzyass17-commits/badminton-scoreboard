@@ -22,6 +22,9 @@ const controls = {
   undo2: $("btnUndo2"),
   hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
+  historyPeek: $("btnHistoryPeek"),
+  collapseLeft: $("btnCollapseLeft"),
+  expandLeft: $("btnExpandLeft"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -60,6 +63,8 @@ const defaultState = () => ({
   playerDB: [],
   viewMode: "board",
   sheetSetIndex: null,
+  leftCollapsed: false,
+  historyPeek: false,
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -145,6 +150,12 @@ function migrate(data) {
   }
   if (data?.sheetSetIndex === undefined) {
     next.sheetSetIndex = null;
+  }
+  if (data?.leftCollapsed === undefined) {
+    next.leftCollapsed = false;
+  }
+  if (data?.historyPeek === undefined) {
+    next.historyPeek = false;
   }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
@@ -795,6 +806,27 @@ function bindEvents() {
       saveState();
     });
   }
+  if (controls.historyPeek) {
+    controls.historyPeek.addEventListener("click", () => {
+      state.historyPeek = !state.historyPeek;
+      updateLayoutVisibility();
+      saveState();
+    });
+  }
+  if (controls.collapseLeft) {
+    controls.collapseLeft.addEventListener("click", () => {
+      state.leftCollapsed = true;
+      updateLayoutVisibility();
+      saveState();
+    });
+  }
+  if (controls.expandLeft) {
+    controls.expandLeft.addEventListener("click", () => {
+      state.leftCollapsed = false;
+      updateLayoutVisibility();
+      saveState();
+    });
+  }
 }
 
 function init() {
@@ -821,7 +853,31 @@ function syncView() {
   const onSheet = state.viewMode === "sheet";
   board.forEach((el) => el.classList.toggle("hidden", onSheet));
   sheet.forEach((el) => el.classList.toggle("hidden", !onSheet));
+  updateLayoutVisibility();
   renderScoreSheet();
+}
+
+function updateLayoutVisibility() {
+  const layout = document.querySelector(".layout");
+  const leftCol = document.querySelector(".left-col");
+  if (layout) {
+    layout.classList.toggle("left-collapsed", state.leftCollapsed);
+  }
+  if (leftCol) {
+    leftCol.classList.toggle("hidden", state.leftCollapsed);
+  }
+  if (controls.expandLeft) {
+    controls.expandLeft.classList.toggle("hidden", !state.leftCollapsed);
+  }
+  const historyCard = document.querySelector(".history-card.view-board");
+  if (historyCard) {
+    historyCard.classList.toggle("hidden", !state.historyPeek);
+    historyCard.classList.toggle("history-peek", state.historyPeek);
+  }
+  const playerDb = document.querySelector(".playerdb-card.view-board");
+  if (playerDb) {
+    playerDb.classList.add("hidden");
+  }
 }
 
 function renderScoreSheet() {

@@ -86,6 +86,10 @@
         <button class="btn warn" id="btnHardReset">全リセット</button>
         <button class="btn ghost" id="btnUndo2">1点戻す</button>
       </div>
+      <div class="scoreboard-peek">
+        <button class="btn ghost" id="btnHistoryPeek">>></button>
+      </div>
+      <button class="btn ghost collapse-right-btn" id="btnCollapseLeft">>></button>
     </section>
 
     <section class="card history-card view-board">
@@ -115,7 +119,7 @@
         <h2>スコアシート</h2>
         <div class="sheet-header-actions">
           <button class="btn ghost hidden" id="btnSheetToCurrent">現在のセットへ</button>
-          <button class="btn ghost" id="btnShareSheet">印刷／共有</button>
+          <button class="btn ghost hidden" id="btnShareSheet">印刷／共有</button>
         </div>
       </div>
       <div id="scoreSheetContent">まだスコアがありません</div>
@@ -129,6 +133,8 @@
       <p>ローカル保存／オフライン対応。大会用エンティティはコード内に保持。</p>
     </footer>
   </main>
+
+  <button class="btn ghost left-expand-btn hidden" id="btnExpandLeft">>></button>
 
   <script src="./script.js"></script>
 </body>
