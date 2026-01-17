@@ -546,6 +546,7 @@ function finishSet(auto = false) {
     server: state.serving,
     names,
     rallies: [...state.rallies],
+    initialServeSide: state.initialServeSide,
     endedAt: Date.now(),
   };
   state.history.push(entry);
@@ -783,20 +784,30 @@ function renderScoreSheet() {
             B: state.displayOrder.B.map((k) => state.players.B[k]),
           },
           rallies: state.rallies,
+          initialServeSide: state.initialServeSide,
           inProgress: true,
         };
 
-  // サーバーごとに、そのサーブ権で得点したときの「得点後の値」だけを順に並べる
+  // サーバーごとに、そのサーブ権で得点したときの「得点後の値」をラリー順に並べ、空欄も保持する
   const namesNow = {
     A1: last.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
     A2: last.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
     B1: last.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
     B2: last.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
   };
-  const buckets = { A1: [], A2: [], B1: [], B2: [] };
-  (last.rallies ?? []).forEach((r) => {
+  const maxRally = last.rallies?.length ?? 0;
+  const initialKey = `${last.initialServeSide ?? state.initialServeSide ?? "A"}1`;
+  const buckets = {
+    A1: Array(maxRally + 1).fill(""),
+    A2: Array(maxRally + 1).fill(""),
+    B1: Array(maxRally + 1).fill(""),
+    B2: Array(maxRally + 1).fill(""),
+  };
+  if (buckets[initialKey]) buckets[initialKey][0] = "0";
+  (last.rallies ?? []).forEach((r, idx) => {
     const srv = r.server ?? "";
-    if (buckets[srv]) buckets[srv].push(r.scorer === "A" ? r.scoreA : r.scoreB);
+    const val = r.scorer === "A" ? r.scoreA : r.scoreB;
+    if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
   });
   const rows = [
     { key: "A1", label: namesNow.A1 || "A1" },
@@ -804,10 +815,12 @@ function renderScoreSheet() {
     { key: "B1", label: namesNow.B1 || "B1" },
     { key: "B2", label: namesNow.B2 || "B2" },
   ]
-    .map(
-      ({ key, label }) =>
-        `<tr><td>${label}</td><td>${buckets[key].length ? buckets[key].join(" ") : "-"}</td></tr>`
-    )
+    .map(({ key, label }) => {
+      const cells = buckets[key]
+        .map((v) => `<td style="text-align:center;">${v || "&nbsp;"}</td>`)
+        .join("");
+      return `<tr><td>${label}</td>${cells}</tr>`;
+    })
     .join("");
 
   container.innerHTML = `
@@ -816,7 +829,15 @@ function renderScoreSheet() {
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
       <table style="width:100%;border-collapse:collapse;">
-        <thead><tr><th style="text-align:left;">サーバー</th><th style="text-align:left;">ラリー番号</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="text-align:left;">サーバー</th>
+            ${Array(maxRally + 1)
+              .fill(0)
+              .map((_, i) => `<th style="text-align:center;">${i === 0 ? "0" : i}</th>`)
+              .join("")}
+          </tr>
+        </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
