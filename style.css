@@ -32,20 +32,20 @@ body {
   max-width: 1180px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 100px minmax(520px, 3fr) minmax(200px, 1.2fr);
+  grid-template-columns: minmax(620px, 3fr) minmax(200px, 1.2fr);
   grid-template-areas:
-    "toggle settings playerdb"
-    "toggle scoreboard playerdb"
-    "toggle history playerdb"
-    "footer footer footer";
+    "scoreboard playerdb"
+    "settings playerdb"
+    "history playerdb"
+    "footer footer";
   gap: 16px;
 }
 
-.toggle-col {
-  grid-area: toggle;
+.toggle-inline {
+  grid-area: scoreboard;
   display: flex;
-  justify-content: center;
-  align-self: flex-start;
+  justify-content: flex-start;
+  margin-bottom: -8px;
 }
 
 .settings-card {
@@ -488,8 +488,8 @@ body {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "toggle"
       "settings"
+      "scoreboard"
       "scoreboard"
       "history"
       "playerdb"
