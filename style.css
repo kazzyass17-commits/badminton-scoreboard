@@ -32,7 +32,7 @@ body {
   max-width: 1180px;
   margin: 0 auto 32px;
   display: grid;
-  grid-template-columns: 140px minmax(620px, 3fr) minmax(200px, 1.2fr);
+  grid-template-columns: 140px minmax(660px, 3fr) minmax(160px, 0.9fr);
   grid-template-areas:
     "left settings playerdb"
     "left scoreboard playerdb"
@@ -461,7 +461,7 @@ body {
 
 .sheet-table th,
 .sheet-table td {
-  padding: 6px 2px;
+  padding: 4px 1px;
   text-align: left;
   white-space: nowrap;
 }
@@ -474,7 +474,7 @@ body {
 
 .sheet-table .score-cell {
   text-align: center;
-  padding: 6px 0.5em; /* 点数間隔 = フォントサイズの半分 */
+  padding: 2px 0.2em; /* 点数間隔をさらに狭く */
   min-width: 0;
 }
 
