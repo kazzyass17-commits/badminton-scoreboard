@@ -447,9 +447,15 @@ body {
 }
 
 .sheet-table .name-cell {
-  width: 18%;
+  width: 22%;
   white-space: nowrap;
-  padding-right: 8px;
+  padding-right: 12px;
+}
+
+.sheet-table .score-cell {
+  text-align: center;
+  padding: 8px 12px;
+  min-width: 32px;
 }
 
 .footer {

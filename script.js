@@ -817,7 +817,7 @@ function renderScoreSheet() {
   ]
     .map(({ key, label }) => {
       const cells = buckets[key]
-        .map((v) => `<td style="text-align:center;">${v || "&nbsp;"}</td>`)
+        .map((v) => `<td class="score-cell">${v || "&nbsp;"}</td>`)
         .join("");
       return `<tr><td>${label}</td>${cells}</tr>`;
     })
@@ -831,7 +831,7 @@ function renderScoreSheet() {
       <table class="sheet-table">
         <thead>
           <tr>
-            <th class="name-cell">サーバー</th>
+            <th class="name-cell">ラリー番号</th>
             ${Array(maxRally + 1)
               .fill(0)
               .map((_, i) => `<th style="text-align:center;">${i === 0 ? "0" : i}</th>`)
