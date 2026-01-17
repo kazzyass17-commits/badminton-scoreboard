@@ -437,7 +437,8 @@ body {
 
 .sheet-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 10px 0; /* 列間を広げる */
 }
 
 .sheet-table th,
@@ -447,14 +448,14 @@ body {
 }
 
 .sheet-table .name-cell {
-  width: 22%;
+  width: 18%;
   white-space: nowrap;
-  padding-right: 12px;
+  padding-right: 6px; /* 名前とスコア列の間隔を確保 */
 }
 
 .sheet-table .score-cell {
   text-align: center;
-  padding: 8px 12px;
+  padding: 6px 6px;
   min-width: 32px;
 }
 
