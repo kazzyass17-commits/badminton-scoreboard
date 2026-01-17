@@ -786,7 +786,7 @@ function renderScoreSheet() {
           inProgress: true,
         };
 
-  // サーバーごとにラリー進行の「現得点」を左から右へ並べる
+  // サーバーごとに、そのサーブ権で得点したときの「得点後の値」だけを順に並べる
   const namesNow = {
     A1: last.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
     A2: last.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
@@ -796,7 +796,7 @@ function renderScoreSheet() {
   const buckets = { A1: [], A2: [], B1: [], B2: [] };
   (last.rallies ?? []).forEach((r) => {
     const srv = r.server ?? "";
-    if (buckets[srv]) buckets[srv].push(`${r.scoreA}-${r.scoreB}`);
+    if (buckets[srv]) buckets[srv].push(r.scorer === "A" ? r.scoreA : r.scoreB);
   });
   const rows = [
     { key: "A1", label: namesNow.A1 || "A1" },
