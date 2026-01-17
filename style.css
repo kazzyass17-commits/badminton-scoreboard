@@ -47,6 +47,7 @@ body {
   flex-direction: column;
   gap: 8px;
   align-items: flex-start;
+  padding-top: 120px; /* スコアの高さに合わせる */
 }
 
 .settings-card {
@@ -484,12 +485,20 @@ body {
     grid-template-columns: 1fr;
     grid-template-areas:
       "left"
-      "settings"
       "scoreboard"
+      "settings"
       "scoreboard"
       "history"
       "playerdb"
       "footer";
+  }
+  .left-col {
+    padding-top: 0;
+    align-items: center;
+  }
+  .playerdb-card {
+    max-height: 240px;
+    overflow: auto;
   }
   .scores {
     grid-template-columns: 1fr 1fr;
