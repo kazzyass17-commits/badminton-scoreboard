@@ -452,7 +452,7 @@ body {
 .sheet-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 10px 0; /* 列間を広げる */
+  border-spacing: 6px 0; /* 列間を調整 */
 }
 
 .sheet-table + .sheet-table {

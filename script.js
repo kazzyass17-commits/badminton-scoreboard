@@ -18,12 +18,13 @@ const controls = {
   historyList: $("historyList"),
   buttons: document.querySelectorAll("button[data-side]"),
   undo: $("btnUndo"),
-  undoBottom: $("btnUndoBottom"),
+  undo2: $("btnUndo2"),
   hardReset: $("btnHardReset"),
   clearHistory: $("clearHistoryBtn"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
+  dbReset: $("btnDbReset"),
   shareSheet: document.getElementById("btnShareSheet"),
 };
 
@@ -604,6 +605,19 @@ function clearHistory() {
   saveState();
 }
 
+function resetPlayerList() {
+  state.playerDB = [];
+  ["A", "B"].forEach((side) => {
+    Object.keys(state.players[side]).forEach((k) => {
+      state.players[side][k] = "";
+    });
+  });
+  state.rallies = [];
+  setStatus("選手リストリセット");
+  syncUI();
+  saveState();
+}
+
 
 function bindEvents() {
   controls.buttons.forEach((btn) => {
@@ -611,8 +625,8 @@ function bindEvents() {
   });
 
   controls.undo.addEventListener("click", undoLastPoint);
-  if (controls.undoBottom) {
-    controls.undoBottom.addEventListener("click", undoLastPoint);
+  if (controls.undo2) {
+    controls.undo2.addEventListener("click", undoLastPoint);
   }
   controls.hardReset.addEventListener("click", () => {
     if (confirm("全データ（名前含む）を初期化しますか？")) hardResetAll();
@@ -620,6 +634,11 @@ function bindEvents() {
   controls.clearHistory.addEventListener("click", () => {
     if (confirm("セット履歴を消去しますか？")) clearHistory();
   });
+  if (controls.dbReset) {
+    controls.dbReset.addEventListener("click", () => {
+      if (confirm("選手リストを初期化しますか？（名前割当も空になります）")) resetPlayerList();
+    });
+  }
 
   controls.targetPoints.forEach((r) => {
     r.addEventListener("change", (e) => {
@@ -796,7 +815,7 @@ function renderScoreSheet() {
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
   });
-  const chunkSize = 10;
+  const chunkSize = 14;
   const chunkCount = Math.max(1, Math.ceil((maxRally + 1) / chunkSize));
   const rowsForRange = (start, end) =>
     [
