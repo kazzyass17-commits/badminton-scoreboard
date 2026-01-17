@@ -34,8 +34,8 @@ body {
   display: grid;
   grid-template-columns: 100px minmax(520px, 3fr) minmax(200px, 1.2fr);
   grid-template-areas:
-    "toggle scoreboard playerdb"
     "toggle settings playerdb"
+    "toggle scoreboard playerdb"
     "toggle history playerdb"
     "footer footer footer";
   gap: 16px;
@@ -146,7 +146,7 @@ body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
 }
 
 .setting-label {
@@ -457,10 +457,11 @@ body {
 .sheet-table td {
   padding: 6px 6px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .sheet-table .name-cell {
-  width: 18%;
+  width: 20%;
   white-space: nowrap;
   padding-right: 6px; /* 名前とスコア列の間隔を確保 */
 }
