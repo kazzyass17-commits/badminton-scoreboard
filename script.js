@@ -795,6 +795,35 @@ function syncView() {
 function renderScoreSheet() {
   const container = document.getElementById("scoreSheetContent");
   if (!container) return;
+  const calcChunkSize = () => {
+    const measureTable = document.createElement("table");
+    measureTable.className = "sheet-table";
+    measureTable.style.visibility = "hidden";
+    measureTable.style.position = "absolute";
+    measureTable.style.left = "-9999px";
+    measureTable.style.top = "-9999px";
+    const tbody = document.createElement("tbody");
+    const tr = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    nameCell.textContent = "名前";
+    const scoreCell = document.createElement("td");
+    scoreCell.className = "score-cell";
+    scoreCell.textContent = "00";
+    tr.appendChild(nameCell);
+    tr.appendChild(scoreCell);
+    tbody.appendChild(tr);
+    measureTable.appendChild(tbody);
+    container.appendChild(measureTable);
+    const nameWidth = nameCell.getBoundingClientRect().width;
+    const cellWidth = scoreCell.getBoundingClientRect().width;
+    const spacing = getComputedStyle(measureTable).borderSpacing.split(" ");
+    const gapX = Number.parseFloat(spacing[0]) || 0;
+    const available = container.getBoundingClientRect().width - nameWidth;
+    measureTable.remove();
+    const perCell = cellWidth + gapX;
+    if (perCell <= 0 || available <= 0) return 14;
+    return Math.max(6, Math.floor(available / perCell));
+  };
   const last = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -829,7 +858,7 @@ function renderScoreSheet() {
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
   });
-  const chunkSize = 14;
+  const chunkSize = calcChunkSize();
   const chunkCount = Math.max(1, Math.ceil((maxRally + 1) / chunkSize));
   const rowsForRange = (start, end) =>
     [

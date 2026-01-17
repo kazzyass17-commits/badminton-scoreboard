@@ -455,7 +455,7 @@ body {
   display: inline-table; /* コンテンツ幅に縮めて左寄せ */
   table-layout: fixed;
   border-collapse: separate;
-  border-spacing: 0 0; /* 点数間の間隔はpaddingで制御 */
+  border-spacing: 0.2em 0; /* 点数間の間隔を一定に */
 }
 
 .sheet-table + .sheet-table {
@@ -476,7 +476,7 @@ body {
 }
 
 .sheet-table .score-cell {
-  text-align: center;
+  text-align: right;
   padding: 0; /* 余白を完全に除去 */
   width: 2ch; /* 2桁でも一定幅に */
   min-width: 2ch;
