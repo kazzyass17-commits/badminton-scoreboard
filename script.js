@@ -828,10 +828,10 @@ function renderScoreSheet() {
     <div><strong>${last.inProgress ? "進行中セット" : "最終セット"}:</strong> ${last.scoreA} - ${last.scoreB}</div>
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
-      <table style="width:100%;border-collapse:collapse;">
+      <table class="sheet-table">
         <thead>
           <tr>
-            <th style="text-align:left;">サーバー</th>
+            <th class="name-cell">サーバー</th>
             ${Array(maxRally + 1)
               .fill(0)
               .map((_, i) => `<th style="text-align:center;">${i === 0 ? "0" : i}</th>`)

@@ -435,6 +435,23 @@ body {
   display: none !important;
 }
 
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheet-table th,
+.sheet-table td {
+  padding: 4px 3px;
+  text-align: left;
+}
+
+.sheet-table .name-cell {
+  width: 14%;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
 .footer {
   text-align: center;
   color: var(--muted);
