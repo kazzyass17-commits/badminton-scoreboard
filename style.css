@@ -242,7 +242,7 @@ body {
 }
 
 .score {
-  font-size: clamp(46px, 10.5vw, 64px);
+  font-size: clamp(52px, 12vw, 72px);
   font-weight: 700;
   text-align: center;
 }
@@ -338,10 +338,10 @@ body {
 }
 
 .history-list {
-  margin-top: 4px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .history-item {
@@ -361,13 +361,13 @@ body {
 }
 
 .history-item .title {
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .history-item .meta {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .history-list.empty {
@@ -402,10 +402,10 @@ body {
 }
 
 .playerdb-list {
-  margin-top: 4px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .playerdb-list.empty {
@@ -417,8 +417,8 @@ body {
 .player-row {
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 2px 4px;
+  gap: 8px;
+  padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
@@ -427,9 +427,8 @@ body {
 
 .player-name {
   flex: 1;
-  font-weight: 700;
-  font-size: 16px;
-  margin-right: 0;
+  font-weight: 600;
+  margin-right: 2px;
 }
 
 .player-actions {
