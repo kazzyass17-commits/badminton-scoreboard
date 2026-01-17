@@ -452,7 +452,7 @@ body {
 .sheet-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 6px 0; /* 列間を調整 */
+  border-spacing: 0 0; /* 点数間の間隔はpaddingで制御 */
 }
 
 .sheet-table + .sheet-table {
@@ -461,7 +461,7 @@ body {
 
 .sheet-table th,
 .sheet-table td {
-  padding: 6px 6px;
+  padding: 6px 2px;
   text-align: left;
   white-space: nowrap;
 }
@@ -474,8 +474,8 @@ body {
 
 .sheet-table .score-cell {
   text-align: center;
-  padding: 6px 6px;
-  min-width: 32px;
+  padding: 6px 0.5em; /* 点数間隔 = フォントサイズの半分 */
+  min-width: 0;
 }
 
 .sheet-sep td {

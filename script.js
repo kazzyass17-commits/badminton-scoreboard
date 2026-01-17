@@ -616,6 +616,7 @@ function hardResetAll() {
 
 function clearHistory() {
   state.history = [];
+  state.scores.setNo = 1;
   setStatus("履歴クリア");
   syncUI();
   saveState();
