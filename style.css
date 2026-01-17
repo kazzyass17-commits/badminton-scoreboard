@@ -34,8 +34,8 @@ body {
   display: grid;
   grid-template-columns: 100px minmax(520px, 3fr) minmax(200px, 1.2fr);
   grid-template-areas:
-    "toggle settings playerdb"
     "toggle scoreboard playerdb"
+    "toggle settings playerdb"
     "toggle history playerdb"
     "footer footer footer";
   gap: 16px;
@@ -45,6 +45,7 @@ body {
   grid-area: toggle;
   display: flex;
   justify-content: center;
+  align-self: flex-start;
 }
 
 .settings-card {
@@ -330,6 +331,7 @@ body {
   line-height: 1.2;
   text-align: center;
   width: 90px;
+  margin-top: 4px;
 }
 
 .history-card .history-header {
