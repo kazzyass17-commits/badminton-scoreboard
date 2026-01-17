@@ -318,8 +318,12 @@ body {
 }
 
 .btn.toggle-btn {
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 8px 10px;
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+  width: 92px;
 }
 
 .history-card .history-header {
@@ -457,6 +461,11 @@ body {
   text-align: center;
   padding: 6px 6px;
   min-width: 32px;
+}
+
+.sheet-sep td {
+  border-top: 1px solid var(--border);
+  padding: 6px 0 0;
 }
 
 .footer {

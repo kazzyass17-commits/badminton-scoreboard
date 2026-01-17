@@ -812,14 +812,19 @@ function renderScoreSheet() {
   const rows = [
     { key: "A1", label: namesNow.A1 || "A1" },
     { key: "A2", label: namesNow.A2 || "A2" },
+    { sep: true },
     { key: "B1", label: namesNow.B1 || "B1" },
     { key: "B2", label: namesNow.B2 || "B2" },
   ]
-    .map(({ key, label }) => {
-      const cells = buckets[key]
+    .map((row) => {
+      if (row.sep) {
+        const span = maxRally + 2;
+        return `<tr class="sheet-sep"><td colspan="${span}"></td></tr>`;
+      }
+      const cells = buckets[row.key]
         .map((v) => `<td class="score-cell">${v || "&nbsp;"}</td>`)
         .join("");
-      return `<tr><td>${label}</td>${cells}</tr>`;
+      return `<tr><td>${row.label}</td>${cells}</tr>`;
     })
     .join("");
 
