@@ -16,6 +16,7 @@ const controls = {
   scoreB: $("scoreB"),
   setNumber: $("setNumber"),
   historyList: $("historyList"),
+  historyListSheet: $("historyListSheet"),
   buttons: document.querySelectorAll("button[data-side]"),
   undo: $("btnUndo"),
   undo2: $("btnUndo2"),
@@ -26,6 +27,7 @@ const controls = {
   playerDbList: $("playerDbList"),
   dbReset: $("btnDbReset"),
   shareSheet: document.getElementById("btnShareSheet"),
+  sheetToCurrent: $("btnSheetToCurrent"),
 };
 
 const defaultDisplayOrder = () => ({
@@ -57,6 +59,7 @@ const defaultState = () => ({
   displayOrder: defaultDisplayOrder(),
   playerDB: [],
   viewMode: "board",
+  sheetSetIndex: null,
   // Future tournament entities kept in state (UI非表示)
   tournament: null, // { tournament_id, name, start_date, end_date, court_count, status }
   entries: [], // Entry[]
@@ -139,6 +142,9 @@ function migrate(data) {
   }
   if (!Array.isArray(data?.rallies)) {
     next.rallies = [];
+  }
+  if (data?.sheetSetIndex === undefined) {
+    next.sheetSetIndex = null;
   }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
@@ -232,8 +238,8 @@ function setServeSide(side) {
   saveState();
 }
 
-function renderHistory() {
-  const list = controls.historyList;
+function renderHistoryList(list, { clickable = false, selectedIndex = null, onSelect } = {}) {
+  if (!list) return;
   if (state.history.length === 0) {
     list.classList.add("empty");
     list.textContent = "まだセットがありません";
@@ -242,40 +248,58 @@ function renderHistory() {
   list.classList.remove("empty");
   list.textContent = "";
 
-  state.history
-    .slice()
-    .reverse()
-    .forEach((item) => {
-      const row = document.createElement("div");
-      row.className = "history-item";
-      const left = document.createElement("div");
-      left.className = "left";
-      const title = document.createElement("div");
-      title.className = "title";
-      title.textContent = `セット ${item.setNo}: ${item.scoreA} - ${item.scoreB}`;
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      const serveSide = item.serveSide ?? "A";
-      const serverTxt = ` / サーブ: ${serveSide}1`;
-      meta.textContent = `ポイント${item.target} / セッティング${item.allowDeuce ? "有" : "無"}${serverTxt}`;
-      const names = document.createElement("div");
-      names.className = "meta";
-      names.textContent = `A: ${item.names.A.join(" / ")} ｜ B: ${item.names.B.join(" / ")}`;
-      left.appendChild(title);
-      left.appendChild(meta);
-      left.appendChild(names);
+  const items = state.history.slice().reverse();
+  items.forEach((item, idx) => {
+    const row = document.createElement("div");
+    row.className = "history-item";
+    const actualIndex = state.history.length - 1 - idx;
+    if (clickable) {
+      row.classList.add("clickable");
+      row.dataset.index = String(actualIndex);
+      if (selectedIndex === actualIndex) row.classList.add("active");
+      row.addEventListener("click", () => onSelect?.(actualIndex));
+    }
+    const left = document.createElement("div");
+    left.className = "left";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `セット ${item.setNo}: ${item.scoreA} - ${item.scoreB}`;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const serveSide = item.serveSide ?? "A";
+    const serverTxt = ` / サーブ: ${serveSide}1`;
+    meta.textContent = `ポイント${item.target} / セッティング${item.allowDeuce ? "有" : "無"}${serverTxt}`;
+    const names = document.createElement("div");
+    names.className = "meta";
+    names.textContent = `A: ${item.names.A.join(" / ")} ｜ B: ${item.names.B.join(" / ")}`;
+    left.appendChild(title);
+    left.appendChild(meta);
+    left.appendChild(names);
 
-      const right = document.createElement("div");
-      right.className = "meta";
-      const d = new Date(item.endedAt);
-      const dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
-      const timeStr = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-      right.textContent = `${dateStr} ${timeStr}`;
+    const right = document.createElement("div");
+    right.className = "meta";
+    const d = new Date(item.endedAt);
+    const dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
+    const timeStr = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    right.textContent = `${dateStr} ${timeStr}`;
 
-      row.appendChild(left);
-      row.appendChild(right);
-      list.appendChild(row);
-    });
+    row.appendChild(left);
+    row.appendChild(right);
+    list.appendChild(row);
+  });
+}
+
+function renderHistory() {
+  renderHistoryList(controls.historyList);
+  renderHistoryList(controls.historyListSheet, {
+    clickable: true,
+    selectedIndex: state.sheetSetIndex,
+    onSelect: (index) => {
+      state.sheetSetIndex = index;
+      syncView();
+      saveState();
+    },
+  });
 }
 
 function renderPlayerDB() {
@@ -617,6 +641,7 @@ function hardResetAll() {
 function clearHistory() {
   state.history = [];
   state.scores.setNo = 1;
+  state.sheetSetIndex = null;
   setStatus("履歴クリア");
   syncUI();
   saveState();
@@ -763,6 +788,13 @@ function bindEvents() {
       }
     });
   }
+  if (controls.sheetToCurrent) {
+    controls.sheetToCurrent.addEventListener("click", () => {
+      state.sheetSetIndex = null;
+      syncView();
+      saveState();
+    });
+  }
 }
 
 function init() {
@@ -795,6 +827,9 @@ function syncView() {
 function renderScoreSheet() {
   const container = document.getElementById("scoreSheetContent");
   if (!container) return;
+  const validHistoryIndex =
+    Number.isInteger(state.sheetSetIndex) && state.sheetSetIndex >= 0 && state.sheetSetIndex < state.history.length;
+  const viewingHistory = validHistoryIndex && state.viewMode === "sheet";
   const last = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -807,13 +842,14 @@ function renderScoreSheet() {
     initialServeSide: state.initialServeSide,
     inProgress: true,
   };
+  const base = viewingHistory ? state.history[state.sheetSetIndex] : last;
 
   // サーバーごとに、そのサーブ権で得点したときの「得点後の値」をラリー順に並べ、空欄も保持する
   const namesNow = {
-    A1: last.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
-    A2: last.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
-    B1: last.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
-    B2: last.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
+    A1: base.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
+    A2: base.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
+    B1: base.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
+    B2: base.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
   };
   const calcChunkSize = (labels) => {
     const measureTable = document.createElement("table");
@@ -849,8 +885,8 @@ function renderScoreSheet() {
     if (perCell <= 0 || available <= 0) return 10;
     return Math.max(4, Math.floor(available / perCell));
   };
-  const maxRally = last.rallies?.length ?? 0;
-  const initialKey = `${last.initialServeSide ?? state.initialServeSide ?? "A"}1`;
+  const maxRally = base.rallies?.length ?? 0;
+  const initialKey = `${base.initialServeSide ?? state.initialServeSide ?? "A"}1`;
   const buckets = {
     A1: Array(maxRally + 1).fill(""),
     A2: Array(maxRally + 1).fill(""),
@@ -858,7 +894,7 @@ function renderScoreSheet() {
     B2: Array(maxRally + 1).fill(""),
   };
   if (buckets[initialKey]) buckets[initialKey][0] = "0";
-  (last.rallies ?? []).forEach((r, idx) => {
+  (base.rallies ?? []).forEach((r, idx) => {
     const srv = r.server ?? "";
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
@@ -904,10 +940,13 @@ function renderScoreSheet() {
 
   container.innerHTML = `
     <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
-    <div><strong>進行中セット:</strong> ${last.scoreA} - ${last.scoreB}</div>
-    <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
+    <div><strong>${viewingHistory ? `セット ${base.setNo}（履歴）` : "進行中セット"}:</strong> ${base.scoreA} - ${base.scoreB}</div>
+    <div><strong>選手:</strong> A: ${base.names?.A?.join(" / ") ?? ""} ｜ B: ${base.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
       ${tables}
     </div>
   `;
+  if (controls.sheetToCurrent) {
+    controls.sheetToCurrent.classList.toggle("hidden", !viewingHistory);
+  }
 }

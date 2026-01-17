@@ -330,11 +330,21 @@ body {
   margin-top: 0;
 }
 
-.history-card .history-header {
+.history-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.sheet-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sheet-history-header {
+  margin-top: 12px;
 }
 
 .history-list {
@@ -352,6 +362,15 @@ body {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
+}
+
+.history-item.clickable {
+  cursor: pointer;
+}
+
+.history-item.active {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .history-item .left {

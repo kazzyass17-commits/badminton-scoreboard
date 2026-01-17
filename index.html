@@ -113,9 +113,16 @@
     <section class="card scoresheet-card view-sheet hidden" id="scoreSheetCard">
       <div class="history-header">
         <h2>スコアシート</h2>
-        <button class="btn ghost" id="btnShareSheet">印刷／共有</button>
+        <div class="sheet-header-actions">
+          <button class="btn ghost hidden" id="btnSheetToCurrent">現在のセットへ</button>
+          <button class="btn ghost" id="btnShareSheet">印刷／共有</button>
+        </div>
       </div>
       <div id="scoreSheetContent">まだスコアがありません</div>
+      <div class="history-header sheet-history-header">
+        <h2>セット履歴</h2>
+      </div>
+      <div id="historyListSheet" class="history-list empty">まだセットがありません</div>
     </section>
 
     <footer class="footer">
