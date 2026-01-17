@@ -43,6 +43,7 @@ const defaultState = () => ({
   },
   scores: { A: 0, B: 0, setNo: 1 },
   pointLog: [], // [{ side, serving, positions, scores }]
+  rallies: [], // 現行セットのラリー記録
   history: [],
   serving: { side: "A", member: "1" },
   initialServeSide: "A", // ラジオ選択保持（0-0時のみ効く）
@@ -134,6 +135,9 @@ function migrate(data) {
   }
   if (!data?.viewMode) {
     next.viewMode = "board";
+  }
+  if (!Array.isArray(data?.rallies)) {
+    next.rallies = [];
   }
   // pointLog旧形式（文字列）を無視
   if (Array.isArray(data?.pointLog) && data.pointLog.length && typeof data.pointLog[0] === "string") {
@@ -472,11 +476,19 @@ function addPoint(side) {
     },
     setNo: state.scores.setNo,
     initialServeApplied: state.initialServeApplied,
+    rallies: [...state.rallies],
   };
   const prevServingSide = state.serving.side;
   state.pointLog.push(snapshot);
   state.scores[side] += 1;
   state.serving = resolveServerAfterPoint(side, prevServingSide);
+  state.rallies.push({
+    rally: state.rallies.length + 1,
+    scorer: side,
+    scoreA: state.scores.A,
+    scoreB: state.scores.B,
+    server: `${state.serving.side}${state.serving.member}`,
+  });
   setStatus("編集中");
   if (isSetFinished()) {
     lastAutoFinishSnapshot = snapshot;
@@ -498,6 +510,7 @@ function undoLastPoint() {
       state.displayOrder = lastAutoFinishSnapshot.displayOrder;
       state.scores.setNo = lastAutoFinishSnapshot.setNo;
       state.initialServeApplied = lastAutoFinishSnapshot.initialServeApplied;
+      state.rallies = lastAutoFinishSnapshot.rallies ?? [];
       lastAutoFinishSnapshot = null;
       state.history.pop(); // 自動保存されたセットを取り消す
       setStatus("自動終了を取り消し");
@@ -513,6 +526,7 @@ function undoLastPoint() {
   state.lastServer = snap.lastServer;
   state.displayOrder = snap.displayOrder;
   state.initialServeApplied = snap.initialServeApplied;
+  state.rallies = snap.rallies ?? [];
   setStatus("編集中");
   syncUI();
   saveState();
@@ -531,6 +545,7 @@ function finishSet(auto = false) {
     allowDeuce: state.settings.allowDeuce,
     server: state.serving,
     names,
+    rallies: [...state.rallies],
     endedAt: Date.now(),
   };
   state.history.push(entry);
@@ -540,6 +555,7 @@ function finishSet(auto = false) {
     state.pointLog = [];
     state.initialServeApplied = false;
     state.initialServeSide = "A"; // 以降の初期値はA
+    state.rallies = [];
     setStatus("セット自動終了");
     syncUI();
     saveState();
@@ -557,6 +573,7 @@ function advanceToNextSet(winnerSide) {
   state.displayOrder = defaultDisplayOrder();
   state.initialServeApplied = false;
   state.initialServeSide = "A";
+  state.rallies = [];
 }
 
 function resetAll() {
@@ -592,6 +609,7 @@ function resetPlayerDB() {
       state.players[side][k] = "";
     });
   });
+  state.rallies = [];
   setStatus("選手DBリセット");
   syncUI();
   saveState();
@@ -764,11 +782,43 @@ function renderScoreSheet() {
             A: state.displayOrder.A.map((k) => state.players.A[k]),
             B: state.displayOrder.B.map((k) => state.players.B[k]),
           },
+          rallies: state.rallies,
           inProgress: true,
         };
+
+  // サーバーごとにラリー番号を縦に並べる
+  const namesNow = {
+    A1: state.players.A[state.displayOrder.A[0]],
+    A2: state.players.A[state.displayOrder.A[1]],
+    B1: state.players.B[state.displayOrder.B[0]],
+    B2: state.players.B[state.displayOrder.B[1]],
+  };
+  const buckets = { A1: [], A2: [], B1: [], B2: [] };
+  (last.rallies ?? []).forEach((r) => {
+    const srv = r.server ?? "";
+    if (buckets[srv]) buckets[srv].push(r.rally);
+  });
+  const rows = [
+    { key: "A1", label: namesNow.A1 || "A1" },
+    { key: "A2", label: namesNow.A2 || "A2" },
+    { key: "B1", label: namesNow.B1 || "B1" },
+    { key: "B2", label: namesNow.B2 || "B2" },
+  ]
+    .map(
+      ({ key, label }) =>
+        `<tr><td>${label}</td><td>${buckets[key].length ? buckets[key].join(" ") : "-"}</td></tr>`
+    )
+    .join("");
+
   container.innerHTML = `
     <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
     <div><strong>${last.inProgress ? "進行中セット" : "最終セット"}:</strong> ${last.scoreA} - ${last.scoreB}</div>
     <div><strong>選手:</strong> A: ${last.names?.A?.join(" / ") ?? ""} ｜ B: ${last.names?.B?.join(" / ") ?? ""}</div>
+    <div style="margin-top:8px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr><th style="text-align:left;">サーバー</th><th style="text-align:left;">ラリー番号</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
 }
