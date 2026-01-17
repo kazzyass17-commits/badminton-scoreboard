@@ -431,7 +431,7 @@ body {
 
 .player-actions {
   display: flex;
-  gap: 6px;
+  gap: 2px;
 }
 
 .btn.micro {
