@@ -322,7 +322,21 @@ function assignPlayerToSlot(name, slot) {
   const index = slot.endsWith("0") ? 0 : 1;
   const order = state.displayOrder[side];
   const key = order[index];
-  state.players[side][key] = name;
+  const currentName = state.players[side][key];
+  if (currentName !== name) {
+    let found = null;
+    ["A", "B"].forEach((s) => {
+      Object.keys(state.players[s]).forEach((k) => {
+        if (state.players[s][k] === name) {
+          found = { side: s, key: k };
+        }
+      });
+    });
+    if (found && !(found.side === side && found.key === key)) {
+      state.players[found.side][found.key] = currentName;
+    }
+    state.players[side][key] = name;
+  }
   ensurePlayerInDB(name);
   setStatus("名前更新");
   syncUI();
