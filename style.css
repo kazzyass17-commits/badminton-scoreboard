@@ -408,6 +408,10 @@ body {
   gap: 8px;
 }
 
+.playerdb-footer {
+  margin-top: 12px;
+}
+
 .playerdb-list.empty {
   color: var(--muted);
   text-align: center;
