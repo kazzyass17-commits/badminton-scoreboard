@@ -478,9 +478,10 @@ body {
 .sheet-table .score-cell {
   text-align: center;
   padding: 0; /* 余白を完全に除去 */
-  width: 1em; /* 点数幅を1文字分に固定 */
-  min-width: 1em;
+  width: 2ch; /* 2桁でも一定幅に */
+  min-width: 2ch;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .sheet-sep td {
