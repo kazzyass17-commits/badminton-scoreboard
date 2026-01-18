@@ -1277,6 +1277,7 @@ function syncView() {
   const board = document.querySelectorAll(".view-board");
   const sheet = document.querySelectorAll(".view-sheet");
   const onSheet = state.viewMode === "sheet";
+  renderHistory();
   if (onSheet) {
     board.forEach((el) => {
       el.classList.add("hidden");
@@ -1397,6 +1398,8 @@ function renderScoreSheet() {
   };
   const maxRally = base.rallies?.length ?? 0;
   const initialKey = `${base.initialServeSide ?? state.initialServeSide ?? "A"}1`;
+  const serveChangeCols = new Set();
+  let prevServer = initialKey;
   const buckets = {
     A1: Array(maxRally + 1).fill(""),
     A2: Array(maxRally + 1).fill(""),
@@ -1408,6 +1411,10 @@ function renderScoreSheet() {
     const srv = r.server ?? "";
     const val = r.scorer === "A" ? r.scoreA : r.scoreB;
     if (buckets[srv]) buckets[srv][idx + 1] = String(val ?? "");
+    if (srv && prevServer && srv !== prevServer) {
+      serveChangeCols.add(idx + 1);
+    }
+    if (srv) prevServer = srv;
   });
   const labels = [
     namesNow.A1 || "A1",
@@ -1432,9 +1439,19 @@ function renderScoreSheet() {
         }
         const cells = buckets[row.key]
           .slice(start, end + 1)
-          .map((v) => `<td class="score-cell">${v || "&nbsp;"}</td>`)
+          .map((v, colIdx) => {
+            const absoluteIdx = start + colIdx;
+            const classes = ["score-cell"];
+            if (serveChangeCols.has(absoluteIdx)) {
+              classes.push("serve-change");
+            }
+            return `<td class="${classes.join(" ")}">${v || "&nbsp;"}</td>`;
+          })
           .join("");
-        const labelCell = start === 0 ? `<td>${row.label}</td>` : `<td>&nbsp;</td>`;
+        const labelCell =
+          start === 0
+            ? `<td class="name-cell">${row.label}</td>`
+            : `<td class="name-cell">&nbsp;</td>`;
         return `<tr>${labelCell}${cells}</tr>`;
       })
       .join("");

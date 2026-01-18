@@ -71,7 +71,7 @@ body.drag-active {
 }
 
 .layout.playerdb-open {
-  grid-template-columns: 140px minmax(0, 3fr) minmax(160px, 0.9fr);
+  grid-template-columns: 140px minmax(520px, 2.4fr) minmax(260px, 1.4fr);
   grid-template-areas:
     "left settings playerdb"
     "left scoreboard playerdb"
@@ -508,6 +508,26 @@ body.drag-active {
   gap: 10px;
 }
 
+.assign-slot[data-assign-slot="A0"] {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.assign-slot[data-assign-slot="A1"] {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.assign-slot[data-assign-slot="B0"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.assign-slot[data-assign-slot="B1"] {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .assign-slot {
   border-radius: 12px;
   border: 1px dashed var(--border);
@@ -694,6 +714,7 @@ body.drag-active .assign-slot {
   width: 20%;
   white-space: nowrap;
   padding-right: 6px; /* 名前とスコア列の間隔を確保 */
+  border-right: 1px solid var(--border);
 }
 
 .sheet-table .score-cell {
@@ -703,6 +724,10 @@ body.drag-active .assign-slot {
   min-width: 2ch;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
+}
+
+.sheet-table .score-cell.serve-change {
+  border-left: 1px solid var(--border);
 }
 
 .sheet-sep td {
