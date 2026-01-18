@@ -1,5 +1,6 @@
 // Phase0 practice scoreboard with future tournament data model retained (non-UI)
 const STORAGE_KEY = "badminton-scoreboard/v1";
+const BOARD_RELOAD_KEY = "badminton-scoreboard/board-reload";
 const statusEl = () => document.getElementById("storageStatus");
 
 const $ = (id) => document.getElementById(id);
@@ -24,7 +25,7 @@ const controls = {
   clearHistory: $("clearHistoryBtn"),
   historyPeek: $("btnHistoryPeek"),
   collapseLeft: $("btnCollapseLeft"),
-  shiftRight: $("btnShiftRight"),
+  expandLeft: $("btnExpandLeft"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -63,7 +64,7 @@ const defaultState = () => ({
   playerDB: [],
   viewMode: "board",
   sheetSetIndex: null,
-  leftCollapsed: true,
+  leftCollapsed: false,
   historyPeek: false,
   playerDbOpen: false,
   // Future tournament entities kept in state (UI非表示)
@@ -107,6 +108,86 @@ class LocalDataStore {
 const store = new LocalDataStore(STORAGE_KEY);
 let state = migrate(store.load() ?? defaultState());
 let lastAutoFinishSnapshot = null;
+let scrollLimit = null;
+let forceBoardTimer = null;
+
+const getScrollLimit = () => {
+  const layout = document.querySelector(".layout");
+  if (!layout) return 0;
+  const cards = Array.from(layout.querySelectorAll(".card")).filter(
+    (el) => !el.classList.contains("hidden")
+  );
+  const layoutBottom = layout.getBoundingClientRect().bottom + window.scrollY;
+  if (!cards.length) {
+    return Math.max(0, layoutBottom - window.innerHeight);
+  }
+  const maxBottom = Math.max(
+    ...cards.map((el) => el.getBoundingClientRect().bottom + window.scrollY)
+  );
+  return Math.max(0, maxBottom - window.innerHeight);
+};
+
+const clampScrollToContent = () => {
+  if (scrollLimit === null) return;
+  if (window.scrollY > scrollLimit + 1) {
+    window.scrollTo(0, scrollLimit);
+  }
+};
+
+const updateScrollLimit = () => {
+  requestAnimationFrame(() => {
+    scrollLimit = getScrollLimit();
+    clampScrollToContent();
+  });
+};
+
+const forceBoardView = () => {
+  if (state.viewMode !== "board") return;
+  const board = document.querySelectorAll(".view-board");
+  const sheet = document.querySelectorAll(".view-sheet");
+  board.forEach((el) => {
+    el.classList.remove("hidden");
+    el.style.display = "";
+  });
+  sheet.forEach((el) => {
+    el.classList.add("hidden");
+    el.style.display = "none";
+  });
+  document.body.classList.remove("view-sheet");
+  updateLayoutVisibility();
+  updateScrollLimit();
+  if (forceBoardTimer) {
+    clearTimeout(forceBoardTimer);
+  }
+  const retry = () => {
+    if (state.viewMode !== "board") return;
+    const card = document.querySelector(".scoreboard-card.view-board");
+    if (!card || card.offsetParent === null || card.getClientRects().length === 0) {
+      board.forEach((el) => {
+        el.classList.remove("hidden");
+        el.style.display = "";
+      });
+      sheet.forEach((el) => {
+        el.classList.add("hidden");
+        el.style.display = "none";
+      });
+      document.body.classList.remove("view-sheet");
+      updateLayoutVisibility();
+      updateScrollLimit();
+    }
+    if (card && card.offsetParent !== null && card.getClientRects().length > 0) {
+      return;
+    }
+    const reloaded = sessionStorage.getItem(BOARD_RELOAD_KEY);
+    if (!reloaded) {
+      sessionStorage.setItem(BOARD_RELOAD_KEY, "1");
+      location.reload();
+    }
+  };
+  forceBoardTimer = setTimeout(retry, 0);
+  setTimeout(retry, 120);
+  setTimeout(retry, 300);
+};
 
 function migrate(data) {
   const next = { ...defaultState(), ...data };
@@ -153,7 +234,7 @@ function migrate(data) {
     next.sheetSetIndex = null;
   }
   if (data?.leftCollapsed === undefined) {
-    next.leftCollapsed = true;
+    next.leftCollapsed = false;
   }
   if (data?.historyPeek === undefined) {
     next.historyPeek = false;
@@ -179,6 +260,13 @@ function saveState() {
 }
 
 function syncUI() {
+  const getDisplayOrderForUI = () => {
+    if (state.scores.A === 0 && state.scores.B === 0 && state.history.length === 0) {
+      return defaultDisplayOrder();
+    }
+    return state.displayOrder;
+  };
+  const uiOrder = getDisplayOrderForUI();
   controls.targetPoints.forEach((r) => {
     r.checked = Number(r.value) === state.settings.targetPoints;
   });
@@ -190,7 +278,7 @@ function syncUI() {
   });
 
   const setInputs = (side, inputs) => {
-    const order = state.displayOrder[side];
+    const order = uiOrder[side];
     inputs.top.value = state.players[side][order[0]];
     inputs.bottom.value = state.players[side][order[1]];
   };
@@ -204,7 +292,9 @@ function syncUI() {
   renderHistory();
   renderPlayerDB();
   updateServeRadioState();
+  updateAssignOverlay();
   syncView();
+  updateScrollLimit();
 }
 
 function canChangeInitialServe() {
@@ -334,7 +424,24 @@ function renderPlayerDB() {
     row.dataset.name = p.name;
     row.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", p.name);
+      dragState.active = true;
+      dragState.name = p.name;
+      dragState.sourceSlot = null;
+      document.body.classList.add("drag-active");
+      setDragTargetsActive(true);
+      updateAssignOverlay();
     });
+    row.addEventListener("dragend", () => {
+      dragState.active = false;
+      dragState.name = null;
+      dragState.sourceSlot = null;
+      setDragTargetsActive(false);
+      document.body.classList.remove("drag-active");
+    });
+    row.addEventListener("touchstart", (e) => {
+      if (e.target.closest(".player-actions")) return;
+      scheduleTouchDrag(p.name, null);
+    }, { passive: true });
     const name = document.createElement("div");
     name.className = "player-name";
     name.textContent = p.name;
@@ -342,11 +449,29 @@ function renderPlayerDB() {
     actions.className = "player-actions";
     const editBtn = document.createElement("button");
     editBtn.className = "btn micro";
+    editBtn.setAttribute("draggable", "false");
     editBtn.textContent = "編集";
+    editBtn.addEventListener("touchstart", (e) => {
+      e.stopPropagation();
+      cancelTouchDrag();
+    }, { passive: true });
+    editBtn.addEventListener("touchend", (e) => {
+      e.stopPropagation();
+      editPlayerName(p.name);
+    }, { passive: true });
     editBtn.addEventListener("click", () => editPlayerName(p.name));
     const delBtn = document.createElement("button");
     delBtn.className = "btn micro danger";
+    delBtn.setAttribute("draggable", "false");
     delBtn.textContent = "削除";
+    delBtn.addEventListener("touchstart", (e) => {
+      e.stopPropagation();
+      cancelTouchDrag();
+    }, { passive: true });
+    delBtn.addEventListener("touchend", (e) => {
+      e.stopPropagation();
+      deletePlayer(p.name);
+    }, { passive: true });
     delBtn.addEventListener("click", () => deletePlayer(p.name));
     actions.appendChild(editBtn);
     actions.appendChild(delBtn);
@@ -382,6 +507,159 @@ function assignPlayerToSlot(name, slot) {
   saveState();
 }
 
+const dragState = {
+  name: null,
+  sourceSlot: null,
+  active: false,
+  timer: null,
+};
+
+const scoreboardDrag = {
+  active: false,
+  sourceSlot: null,
+  timer: null,
+};
+
+const slotFromInputId = (id) => {
+  switch (id) {
+    case "nameA1":
+      return "A0";
+    case "nameA2":
+      return "A1";
+    case "nameB1":
+      return "B0";
+    case "nameB2":
+      return "B1";
+    default:
+      return null;
+  }
+};
+
+const slotToKey = (slot) => {
+  const side = slot.startsWith("A") ? "A" : "B";
+  const index = slot.endsWith("0") ? 0 : 1;
+  const order = state.displayOrder[side];
+  const key = order[index];
+  return { side, key };
+};
+
+const getSlotValue = (slot) => {
+  const { side, key } = slotToKey(slot);
+  return state.players[side][key];
+};
+
+const setSlotValue = (slot, value) => {
+  const { side, key } = slotToKey(slot);
+  state.players[side][key] = value;
+};
+
+const swapSlots = (sourceSlot, targetSlot) => {
+  if (!sourceSlot || !targetSlot || sourceSlot === targetSlot) return;
+  const sourceName = getSlotValue(sourceSlot);
+  const targetName = getSlotValue(targetSlot);
+  setSlotValue(sourceSlot, targetName);
+  setSlotValue(targetSlot, sourceName);
+  ensurePlayerInDB(sourceName);
+  ensurePlayerInDB(targetName);
+  setStatus("名前入れ替え");
+  syncUI();
+  saveState();
+};
+
+const applyDrop = (name, targetSlot, sourceSlot) => {
+  if (!targetSlot) return;
+  if (sourceSlot) {
+    swapSlots(sourceSlot, targetSlot);
+    return;
+  }
+  if (!name) return;
+  assignPlayerToSlot(name, targetSlot);
+};
+
+const setDragTargetsActive = () => {};
+
+const updateAssignOverlay = () => {
+  const slots = document.querySelectorAll(".assign-slot");
+  if (!slots.length) return;
+  slots.forEach((slotEl) => {
+    const slot = slotEl.dataset.assignSlot;
+    if (!slot) return;
+    const nameEl = slotEl.querySelector("[data-assign-name]");
+    if (!nameEl) return;
+    nameEl.textContent = getSlotValue(slot) ?? "";
+  });
+};
+
+const scheduleTouchDrag = (name, sourceSlot) => {
+  if (!name) return;
+  clearTimeout(dragState.timer);
+  dragState.timer = setTimeout(() => {
+    dragState.active = true;
+    dragState.name = name;
+    dragState.sourceSlot = sourceSlot;
+    document.activeElement?.blur?.();
+    document.body.classList.add("drag-active");
+    setDragTargetsActive(true);
+    updateAssignOverlay();
+  }, 250);
+};
+
+const cancelTouchDrag = () => {
+  clearTimeout(dragState.timer);
+  dragState.timer = null;
+};
+
+const clearScoreboardHighlights = () => {
+  [
+    controls.nameA1,
+    controls.nameA2,
+    controls.nameB1,
+    controls.nameB2,
+  ].forEach((el) => el?.classList.remove("swap-target"));
+};
+
+const scheduleScoreboardTouchDrag = (sourceSlot) => {
+  if (!sourceSlot) return;
+  clearTimeout(scoreboardDrag.timer);
+  scoreboardDrag.timer = setTimeout(() => {
+    scoreboardDrag.active = true;
+    scoreboardDrag.sourceSlot = sourceSlot;
+  }, 250);
+};
+
+const cancelScoreboardTouchDrag = () => {
+  clearTimeout(scoreboardDrag.timer);
+  scoreboardDrag.timer = null;
+  scoreboardDrag.active = false;
+  scoreboardDrag.sourceSlot = null;
+  clearScoreboardHighlights();
+};
+
+const finishScoreboardTouchDrag = (x, y) => {
+  if (!scoreboardDrag.active) return;
+  const target = document.elementFromPoint(x, y);
+  const input = target?.closest?.("input");
+  const slot = input ? slotFromInputId(input.id) : null;
+  if (slot && scoreboardDrag.sourceSlot && slot !== scoreboardDrag.sourceSlot) {
+    swapSlots(scoreboardDrag.sourceSlot, slot);
+  }
+  cancelScoreboardTouchDrag();
+};
+
+const finishTouchDrag = (x, y) => {
+  if (!dragState.active) return;
+  const target = document.elementFromPoint(x, y);
+  const assignSlot = target?.closest?.("[data-assign-slot]");
+  const input = target?.closest?.("input");
+  const slot = assignSlot?.dataset?.assignSlot ?? (input ? slotFromInputId(input.id) : null);
+  applyDrop(dragState.name, slot, dragState.sourceSlot);
+  dragState.active = false;
+  dragState.name = null;
+  dragState.sourceSlot = null;
+  setDragTargetsActive(false);
+  document.body.classList.remove("drag-active");
+};
+
 function addPlayerToDB() {
   const name = controls.dbNameInput?.value.trim();
   if (!name) return;
@@ -402,6 +680,7 @@ function ensurePlayerInDB(name) {
 }
 
 function deletePlayer(name) {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
   state.playerDB = state.playerDB.filter((p) => p.name !== name);
   // 割り当て済みの同名を空にする
   ["A", "B"].forEach((side) => {
@@ -459,7 +738,10 @@ function updateServeUI() {
     { side: "A", inputs: [controls.nameA1, controls.nameA2] },
     { side: "B", inputs: [controls.nameB1, controls.nameB2] },
   ].forEach(({ side, inputs }) => {
-    const order = state.displayOrder[side];
+    const order =
+      state.scores.A === 0 && state.scores.B === 0 && state.history.length === 0
+        ? defaultDisplayOrder()[side]
+        : state.displayOrder[side];
     inputs.forEach((input) => input.classList.remove("serving"));
     const idx = order.findIndex((k) => k === `p${state.serving.member}`);
     if (state.serving.side === side && idx !== -1) {
@@ -594,6 +876,12 @@ function finishSet(auto = false) {
     A: state.displayOrder.A.map((k) => state.players.A[k]),
     B: state.displayOrder.B.map((k) => state.players.B[k]),
   };
+  const namesByKey = {
+    A1: state.players.A.p1,
+    A2: state.players.A.p2,
+    B1: state.players.B.p1,
+    B2: state.players.B.p2,
+  };
   const entry = {
     setNo: state.scores.setNo,
     scoreA: state.scores.A,
@@ -602,6 +890,7 @@ function finishSet(auto = false) {
     allowDeuce: state.settings.allowDeuce,
     server: state.serving,
     names,
+    namesByKey,
     rallies: [...state.rallies],
     serveSide: state.initialServeSide,
     initialServeSide: state.initialServeSide,
@@ -734,6 +1023,10 @@ function bindEvents() {
   controls.nameA2.addEventListener("blur", nameBlurHandler("A", 1));
   controls.nameB1.addEventListener("blur", nameBlurHandler("B", 0));
   controls.nameB2.addEventListener("blur", nameBlurHandler("B", 1));
+  controls.nameA1.addEventListener("change", nameBlurHandler("A", 0));
+  controls.nameA2.addEventListener("change", nameBlurHandler("A", 1));
+  controls.nameB1.addEventListener("change", nameBlurHandler("B", 0));
+  controls.nameB2.addEventListener("change", nameBlurHandler("B", 1));
 
   controls.initialServe.forEach((r) => {
     r.addEventListener("change", (e) => {
@@ -743,15 +1036,23 @@ function bindEvents() {
     });
   });
 
-  const toggleBtn = document.getElementById("btnViewToggle");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      state.viewMode = state.viewMode === "board" ? "sheet" : "board";
-      syncView();
+  document.querySelectorAll(".btnViewToggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (state.viewMode === "sheet") {
+        state.viewMode = "board";
+        state.sheetSetIndex = null;
+        state.playerDbOpen = false;
+        syncUI();
+        requestAnimationFrame(() => window.scrollTo(0, 0));
+        forceBoardView();
+      } else {
+        state.viewMode = "sheet";
+        syncView();
+      }
       saveState();
       setStatus(`表示切替: ${state.viewMode === "sheet" ? "スコアシート" : "スコアボード"}`);
     });
-  }
+  });
 
   controls.serveSide.forEach((r) => {
     r.addEventListener("change", (e) => {
@@ -775,21 +1076,111 @@ function bindEvents() {
   const makeDropHandler = (side, index) => (e) => {
     e.preventDefault();
     const name = e.dataTransfer?.getData("text/plain");
-    if (!name) return;
-    assignPlayerToSlot(name, `${side}${index}`);
+    const sourceSlot = e.dataTransfer?.getData("application/x-badminton-slot");
+    if (!name && !sourceSlot) return;
+    applyDrop(name, `${side}${index}`, sourceSlot || null);
   };
   const makeDragOver = (e) => {
     e.preventDefault();
   };
   [
-    { el: controls.nameA1, side: "A", idx: 0 },
-    { el: controls.nameA2, side: "A", idx: 1 },
-    { el: controls.nameB1, side: "B", idx: 0 },
-    { el: controls.nameB2, side: "B", idx: 1 },
-  ].forEach(({ el, side, idx }) => {
+    { el: controls.nameA1, side: "A", idx: 0, slot: "A0" },
+    { el: controls.nameA2, side: "A", idx: 1, slot: "A1" },
+    { el: controls.nameB1, side: "B", idx: 0, slot: "B0" },
+    { el: controls.nameB2, side: "B", idx: 1, slot: "B1" },
+  ].forEach(({ el, side, idx, slot }) => {
     if (!el) return;
     el.addEventListener("dragover", makeDragOver);
     el.addEventListener("drop", makeDropHandler(side, idx));
+    el.setAttribute("draggable", "true");
+    el.addEventListener("dragstart", (e) => {
+      e.dataTransfer?.setData("text/plain", el.value || " ");
+      e.dataTransfer?.setData("application/x-badminton-slot", slot);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      el.classList.add("swap-target");
+    });
+    el.addEventListener("dragend", () => {
+      clearScoreboardHighlights();
+    });
+    el.addEventListener("dragenter", () => {
+      el.classList.add("swap-target");
+    });
+    el.addEventListener("dragleave", () => {
+      el.classList.remove("swap-target");
+    });
+    el.addEventListener("touchstart", () => {
+      scheduleScoreboardTouchDrag(slot);
+    }, { passive: true });
+  });
+  document.querySelectorAll(".assign-slot").forEach((el) => {
+    el.addEventListener("dragover", makeDragOver);
+    el.addEventListener("dragleave", () => {
+      el.classList.remove("assign-active");
+    });
+    el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      el.classList.remove("assign-active");
+      const name = e.dataTransfer?.getData("text/plain");
+      const sourceSlot = e.dataTransfer?.getData("application/x-badminton-slot");
+      if (!name && !sourceSlot) return;
+      const slot = el.dataset.assignSlot;
+      applyDrop(name, slot, sourceSlot || null);
+    });
+    el.addEventListener("dragenter", () => {
+      el.classList.add("assign-active");
+    });
+  });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!dragState.active && !scoreboardDrag.active) return;
+    e.preventDefault();
+    const touch = e.touches?.[0];
+    if (!touch) return;
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (dragState.active) {
+      document.querySelectorAll(".assign-slot").forEach((slot) => {
+        slot.classList.toggle("assign-active", slot.contains(target));
+      });
+    }
+    if (scoreboardDrag.active) {
+      const input = target?.closest?.("input");
+      clearScoreboardHighlights();
+      if (input) input.classList.add("swap-target");
+    }
+  }, { passive: false });
+  document.addEventListener("touchend", (e) => {
+    if (dragState.active) {
+      e.preventDefault();
+      document.querySelectorAll(".assign-slot").forEach((slot) => slot.classList.remove("assign-active"));
+      const touch = e.changedTouches?.[0];
+      if (!touch) return;
+      finishTouchDrag(touch.clientX, touch.clientY);
+      return;
+    }
+    if (scoreboardDrag.active) {
+      e.preventDefault();
+      const touch = e.changedTouches?.[0];
+      if (!touch) return;
+      finishScoreboardTouchDrag(touch.clientX, touch.clientY);
+      return;
+    }
+    cancelTouchDrag();
+    cancelScoreboardTouchDrag();
+  }, { passive: false });
+  document.addEventListener("touchcancel", () => {
+    cancelTouchDrag();
+    dragState.active = false;
+    setDragTargetsActive(false);
+    document.body.classList.remove("drag-active");
+    cancelScoreboardTouchDrag();
+  }, { passive: true });
+  document.addEventListener("dragend", () => {
+    if (!dragState.active) return;
+    dragState.active = false;
+    dragState.name = null;
+    dragState.sourceSlot = null;
+    setDragTargetsActive(false);
+    document.body.classList.remove("drag-active");
   });
 
   if (controls.shareSheet) {
@@ -803,6 +1194,22 @@ function bindEvents() {
       }
     });
   }
+  window.addEventListener("scroll", clampScrollToContent, { passive: true });
+  window.addEventListener("resize", updateScrollLimit);
+  updateScrollLimit();
+  const updateOverscrollLock = () => {
+    const root = document.documentElement;
+    const maxScroll = root.scrollHeight - root.clientHeight;
+    if (maxScroll <= 0) {
+      document.body.classList.remove("overscroll-lock");
+      return;
+    }
+    const atBottom = root.scrollTop >= maxScroll - 1;
+    document.body.classList.toggle("overscroll-lock", atBottom);
+  };
+  window.addEventListener("scroll", updateOverscrollLock, { passive: true });
+  window.addEventListener("resize", updateOverscrollLock);
+  updateOverscrollLock();
   if (controls.sheetToCurrent) {
     controls.sheetToCurrent.addEventListener("click", () => {
       state.sheetSetIndex = null;
@@ -818,15 +1225,27 @@ function bindEvents() {
     });
   }
   if (controls.collapseLeft) {
+    controls.collapseLeft.classList.remove("hidden");
     controls.collapseLeft.addEventListener("click", () => {
       state.playerDbOpen = !state.playerDbOpen;
       updateLayoutVisibility();
       saveState();
     });
   }
-  if (controls.shiftRight) {
-    controls.shiftRight.addEventListener("click", () => {
-      state.leftCollapsed = !state.leftCollapsed;
+  if (controls.expandLeft) {
+    controls.expandLeft.addEventListener("click", () => {
+      if (state.viewMode === "sheet") {
+        state.viewMode = "board";
+        state.sheetSetIndex = null;
+        state.playerDbOpen = false;
+        syncUI();
+        requestAnimationFrame(() => window.scrollTo(0, 0));
+        forceBoardView();
+      } else {
+        state.viewMode = "sheet";
+        state.playerDbOpen = false;
+        syncView();
+      }
       updateLayoutVisibility();
       saveState();
     });
@@ -834,6 +1253,9 @@ function bindEvents() {
 }
 
 function init() {
+  state.historyPeek = false;
+  state.playerDbOpen = false;
+  sessionStorage.removeItem(BOARD_RELOAD_KEY);
   syncUI();
   bindEvents();
   setStatus("復元済み");
@@ -855,31 +1277,61 @@ function syncView() {
   const board = document.querySelectorAll(".view-board");
   const sheet = document.querySelectorAll(".view-sheet");
   const onSheet = state.viewMode === "sheet";
-  board.forEach((el) => el.classList.toggle("hidden", onSheet));
-  sheet.forEach((el) => el.classList.toggle("hidden", !onSheet));
+  if (onSheet) {
+    board.forEach((el) => {
+      el.classList.add("hidden");
+      el.style.display = "none";
+    });
+    sheet.forEach((el) => {
+      el.classList.remove("hidden");
+      el.style.display = "";
+    });
+  } else {
+    board.forEach((el) => {
+      el.classList.remove("hidden");
+      el.style.display = "";
+    });
+    sheet.forEach((el) => {
+      el.classList.add("hidden");
+      el.style.display = "none";
+    });
+  }
+  document.body.classList.toggle("view-sheet", onSheet);
+  if (controls.collapseLeft) {
+    controls.collapseLeft.classList.toggle("hidden", onSheet);
+  }
   updateLayoutVisibility();
   renderScoreSheet();
+  updateScrollLimit();
 }
 
 function updateLayoutVisibility() {
   const layout = document.querySelector(".layout");
   const leftCol = document.querySelector(".left-col");
+  const isBoard = state.viewMode === "board";
+  document.body.classList.toggle("playerdb-open", state.playerDbOpen);
+  const assignOverlay = document.getElementById("assignOverlay");
+  if (assignOverlay) {
+    assignOverlay.classList.toggle("force-visible", state.playerDbOpen && isBoard);
+    assignOverlay.style.display = state.playerDbOpen ? "flex" : "";
+  }
   if (layout) {
-    layout.classList.toggle("left-collapsed", state.leftCollapsed);
-    layout.classList.toggle("playerdb-open", state.playerDbOpen);
+    layout.classList.toggle("playerdb-open", state.playerDbOpen && isBoard);
+    layout.classList.toggle("history-hidden", isBoard && (!state.historyPeek || state.playerDbOpen));
   }
   if (leftCol) {
-    leftCol.classList.toggle("hidden", state.leftCollapsed);
+    leftCol.classList.remove("hidden");
   }
   const historyCard = document.querySelector(".history-card.view-board");
   if (historyCard) {
-    historyCard.classList.toggle("hidden", !state.historyPeek);
+    historyCard.classList.toggle("hidden", !state.historyPeek || state.playerDbOpen);
     historyCard.classList.toggle("history-peek", state.historyPeek);
   }
   const playerDb = document.querySelector(".playerdb-card.view-board");
   if (playerDb) {
-    playerDb.classList.toggle("hidden", !state.playerDbOpen);
+    playerDb.classList.toggle("hidden", !(state.playerDbOpen && isBoard));
   }
+  updateScrollLimit();
 }
 
 function renderScoreSheet() {
@@ -904,10 +1356,10 @@ function renderScoreSheet() {
 
   // サーバーごとに、そのサーブ権で得点したときの「得点後の値」をラリー順に並べ、空欄も保持する
   const namesNow = {
-    A1: base.names?.A?.[0] ?? state.players.A[state.displayOrder.A[0]],
-    A2: base.names?.A?.[1] ?? state.players.A[state.displayOrder.A[1]],
-    B1: base.names?.B?.[0] ?? state.players.B[state.displayOrder.B[0]],
-    B2: base.names?.B?.[1] ?? state.players.B[state.displayOrder.B[1]],
+    A1: base.namesByKey?.A1 ?? state.players.A.p1,
+    A2: base.namesByKey?.A2 ?? state.players.A.p2,
+    B1: base.namesByKey?.B1 ?? state.players.B.p1,
+    B2: base.namesByKey?.B2 ?? state.players.B.p2,
   };
   const calcChunkSize = (labels) => {
     const measureTable = document.createElement("table");
@@ -997,9 +1449,9 @@ function renderScoreSheet() {
   }).join("");
 
   container.innerHTML = `
-    <div><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
-    <div><strong>${viewingHistory ? `セット ${base.setNo}（履歴）` : "進行中セット"}:</strong> ${base.scoreA} - ${base.scoreB}</div>
-    <div><strong>選手:</strong> A: ${base.names?.A?.join(" / ") ?? ""} ｜ B: ${base.names?.B?.join(" / ") ?? ""}</div>
+    <div class="sheet-summary"><strong>セット数:</strong> ${state.history.length || "進行中"}</div>
+    <div class="sheet-summary"><strong>${viewingHistory ? `セット ${base.setNo}（履歴）` : "進行中セット"}:</strong> ${base.scoreA} - ${base.scoreB}</div>
+    <div class="sheet-summary"><strong>選手:</strong> A: ${base.names?.A?.join(" / ") ?? ""} ｜ B: ${base.names?.B?.join(" / ") ?? ""}</div>
     <div style="margin-top:8px;">
       ${tables}
     </div>

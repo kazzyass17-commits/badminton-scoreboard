@@ -8,7 +8,9 @@
 </head>
 <body>
   <main class="layout">
-    <aside class="left-col"></aside>
+    <aside class="left-col">
+      <button class="btn ghost btnViewToggle" id="btnViewToggle">スコアボード<br>↓↑<br>スコアシート</button>
+    </aside>
     <section class="card settings-card view-board">
       <div class="setting-row compact">
         <div class="setting-inline">
@@ -47,14 +49,14 @@
 
     <section class="card scoreboard-card view-board">
       <div class="names">
-        <div class="name-group">
+        <div class="name-group" id="sideAGroup">
           <div class="side-label">サイドA</div>
           <div class="name-input duo">
             <input id="nameA1" type="text" placeholder="選手A1" autocomplete="off" />
             <input id="nameA2" type="text" placeholder="選手A2" autocomplete="off" />
           </div>
         </div>
-        <div class="name-group">
+        <div class="name-group" id="sideBGroup">
           <div class="side-label">サイドB</div>
           <div class="name-input duo">
             <input id="nameB1" type="text" placeholder="選手B1" autocomplete="off" />
@@ -83,11 +85,10 @@
         <button class="btn warn" id="btnHardReset">全リセット</button>
         <button class="btn ghost" id="btnUndo2">1点戻す</button>
       </div>
+      <div class="scoreboard-actions hidden"></div>
       <div class="scoreboard-peek">
         <button class="btn ghost" id="btnHistoryPeek">∨</button>
       </div>
-      <button class="btn ghost collapse-left-btn" id="btnShiftRight"><<</button>
-      <button class="btn ghost collapse-right-btn" id="btnCollapseLeft">>></button>
     </section>
 
     <section class="card history-card view-board">
@@ -127,8 +128,31 @@
       <div id="historyListSheet" class="history-list empty">まだセットがありません</div>
     </section>
 
+    <div class="assign-overlay" id="assignOverlay" aria-hidden="true">
+      <div class="assign-grid">
+        <div class="assign-slot" data-assign-slot="A0">
+          <div class="assign-label">A2</div>
+          <div class="assign-name" data-assign-name></div>
+        </div>
+        <div class="assign-slot" data-assign-slot="B0">
+          <div class="assign-label">B1</div>
+          <div class="assign-name" data-assign-name></div>
+        </div>
+        <div class="assign-slot" data-assign-slot="A1">
+          <div class="assign-label">A1</div>
+          <div class="assign-name" data-assign-name></div>
+        </div>
+        <div class="assign-slot" data-assign-slot="B1">
+          <div class="assign-label">B2</div>
+          <div class="assign-name" data-assign-name></div>
+        </div>
+      </div>
+    </div>
     <footer class="footer"></footer>
   </main>
+
+  <button class="btn ghost mobile-sheet-toggle" id="btnExpandLeft"><<</button>
+  <button class="btn ghost collapse-right-btn" id="btnCollapseLeft">>></button>
 
 
   <script src="./script.js"></script>

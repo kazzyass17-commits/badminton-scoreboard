@@ -24,13 +24,22 @@ body {
               radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.1), transparent 30%),
               var(--bg);
   color: var(--text);
-  min-height: 100vh;
+  min-height: 0;
+}
+
+body.overscroll-lock {
+  overscroll-behavior-y: contain;
+}
+
+body.drag-active {
+  overflow: hidden;
+  touch-action: none;
 }
 
 .layout {
-  padding: 16px;
+  padding: 16px 16px 0;
   max-width: 1180px;
-  margin: 0 auto 32px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 140px minmax(660px, 3fr) 0;
   grid-template-areas:
@@ -41,22 +50,35 @@ body {
   gap: 16px;
 }
 
-.layout.left-collapsed {
-  grid-template-columns: 0 minmax(660px, 3fr) 0;
+.layout.history-hidden {
   grid-template-areas:
-    "settings settings playerdb"
-    "scoreboard scoreboard playerdb"
-    "history history playerdb"
+    "left settings playerdb"
+    "left scoreboard playerdb"
     "footer footer footer";
 }
 
-.layout.playerdb-open {
-  grid-template-columns: 140px minmax(660px, 3fr) minmax(160px, 0.9fr);
+.mobile-sheet-toggle {
+  display: none;
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
 }
 
-.layout.left-collapsed.playerdb-open {
-  grid-template-columns: 0 minmax(660px, 3fr) minmax(160px, 0.9fr);
+.view-sheet .mobile-sheet-toggle {
+  display: inline-flex !important;
 }
+
+.layout.playerdb-open {
+  grid-template-columns: 140px minmax(0, 3fr) minmax(160px, 0.9fr);
+  grid-template-areas:
+    "left settings playerdb"
+    "left scoreboard playerdb"
+    "left history playerdb"
+    "footer footer footer";
+}
+
 
 .left-col {
   grid-area: left;
@@ -69,23 +91,28 @@ body {
 
 .settings-card {
   grid-area: settings;
+  min-width: 0;
 }
 
 .scoreboard-card {
   grid-area: scoreboard;
   position: relative;
+  min-width: 0;
 }
 
 .history-card {
   grid-area: history;
+  min-width: 0;
 }
 
 .playerdb-card {
   grid-area: playerdb;
+  min-width: 0;
 }
 
 .scoresheet-card {
   grid-area: history;
+  min-width: 0;
 }
 
 .footer {
@@ -138,6 +165,10 @@ body {
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.layout .card {
+  margin-bottom: 0;
 }
 
 .settings-card .setting-row {
@@ -243,6 +274,11 @@ body {
   background: var(--surface);
   color: var(--text);
   font-size: 16px;
+}
+
+.name-input input.swap-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
 .name-input input.serving {
@@ -354,6 +390,12 @@ body {
   margin-top: 8px;
 }
 
+.scoreboard-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
 .collapse-left-btn {
   position: absolute;
   left: -12px;
@@ -362,11 +404,18 @@ body {
 }
 
 .collapse-right-btn {
-  position: absolute;
-  right: -12px;
+  position: fixed;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
+  z-index: 10;
+  touch-action: manipulation;
 }
+
+.view-sheet .collapse-right-btn {
+  display: none !important;
+}
+
 
 
 .history-header {
@@ -374,6 +423,24 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.scoresheet-card .history-header h2,
+.scoresheet-card .sheet-history-header h2,
+.scoresheet-card #scoreSheetContent strong {
+  font-size: 18px;
+}
+
+.scoresheet-card .sheet-summary {
+  font-size: 18px;
+}
+
+.scoresheet-card .sheet-table td {
+  font-size: 16px;
+}
+
+.view-sheet .history-card {
+  display: none !important;
 }
 
 .sheet-header-actions {
@@ -415,6 +482,97 @@ body {
 .history-item.active {
   border-color: var(--accent);
   background: rgba(16, 185, 129, 0.08);
+}
+
+.drag-target {
+  outline: 2px dashed rgba(16, 185, 129, 0.6);
+  outline-offset: 2px;
+}
+
+.assign-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 16px;
+  z-index: 2;
+}
+
+.assign-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.assign-slot {
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.assign-slot.assign-active {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.assign-label {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.assign-name {
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+body.drag-active .assign-overlay {
+  display: flex;
+}
+
+body.playerdb-open .assign-overlay {
+  display: flex;
+  position: fixed;
+  top: 12px;
+  bottom: 12px;
+  left: 12px;
+  width: calc(50vw - 12px);
+  z-index: 7;
+}
+
+@media (min-width: 821px) {
+  body.playerdb-open .assign-overlay {
+    display: none;
+  }
+}
+
+.assign-overlay.force-visible {
+  display: flex;
+}
+
+body.drag-active .scoreboard-card .names,
+body.drag-active .scoreboard-card .scores,
+body.drag-active .scoreboard-card .controls,
+body.drag-active .scoreboard-card .scoreboard-actions,
+body.drag-active .scoreboard-card .scoreboard-peek {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.drag-active .assign-slot {
+  outline: 2px dashed rgba(16, 185, 129, 0.6);
+  outline-offset: 2px;
 }
 
 .history-item .left {
@@ -556,20 +714,70 @@ body {
   text-align: center;
   color: var(--muted);
   font-size: 13px;
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 @media (max-width: 520px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "left"
-      "scoreboard"
       "settings"
       "scoreboard"
-      "history"
+      "history";
+  }
+  .layout.history-hidden {
+    grid-template-areas:
+      "settings"
+      "scoreboard";
+  }
+  .view-sheet .layout {
+    grid-template-areas:
+      "history";
+  }
+  .footer {
+    display: none;
+  }
+  .scoreboard-card {
+    width: 70%;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .scoresheet-card {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .playerdb-card {
+    display: none;
+  }
+  .layout.playerdb-open .playerdb-card {
+    display: block;
+  }
+  .left-col {
+    display: none;
+  }
+  .mobile-sheet-toggle {
+    display: inline-flex;
+  }
+  .layout.playerdb-open {
+    grid-template-columns: 0 minmax(0, 1fr);
+    grid-template-areas:
       "playerdb"
-      "footer";
+      "footer footer";
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .layout.playerdb-open .scoreboard-card {
+    display: none;
+  }
+  .layout.playerdb-open .playerdb-card {
+    width: 50vw;
+    margin-left: auto;
+  }
+  .layout.playerdb-open .left-col,
+  .layout.playerdb-open .settings-card,
+  .layout.playerdb-open .history-card {
+    display: none;
   }
   .left-col {
     padding-top: 0;
@@ -594,11 +802,76 @@ body {
   .controls {
     grid-template-columns: 1fr;
   }
+  .collapse-right-btn {
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
 }
 
 @media (orientation: landscape) and (max-width: 820px) {
   .layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "settings"
+      "scoreboard"
+      "history";
+  }
+  .layout.history-hidden {
+    grid-template-areas:
+      "settings"
+      "scoreboard";
+  }
+  .view-sheet .layout {
+    grid-template-areas:
+      "history";
+  }
+  .footer {
+    display: none;
+  }
+  .scoreboard-card {
+    width: 70%;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .scoresheet-card {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .playerdb-card {
+    display: none;
+  }
+  .layout.playerdb-open .playerdb-card {
+    display: block;
+  }
+  .left-col {
+    display: none;
+  }
+  .mobile-sheet-toggle {
+    display: inline-flex;
+  }
+  .layout.playerdb-open {
+    grid-template-columns: 0 minmax(0, 1fr);
+    grid-template-areas:
+      "playerdb"
+      "footer footer";
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .layout.playerdb-open .scoreboard-card {
+    display: none;
+  }
+  .layout.playerdb-open .playerdb-card {
+    width: 50vw;
+    margin-left: auto;
+  }
+  .layout.playerdb-open .left-col,
+  .layout.playerdb-open .settings-card,
+  .layout.playerdb-open .history-card {
+    display: none;
   }
   .app-title {
     font-size: 18px;
@@ -612,11 +885,18 @@ body {
   .card {
     padding: 12px;
   }
+  .collapse-right-btn {
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
   .scoreboard-card {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-height: 60vh;
+    justify-content: flex-start;
+    min-height: 0;
   }
   .scores {
     grid-template-columns: 1.1fr auto 1.1fr;
