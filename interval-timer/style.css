@@ -1,0 +1,180 @@
+:root {
+  color-scheme: light;
+  --bg: #0f172a;
+  --surface: #111827;
+  --card: #1f2937;
+  --muted: #9ca3af;
+  --text: #e5e7eb;
+  --accent: #10b981;
+  --accent-2: #38bdf8;
+  --warn: #f59e0b;
+  --border: #1f2a3f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 35%),
+              radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.1), transparent 30%),
+              var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.timer-app {
+  width: min(520px, 100%);
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.timer-header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.timer-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.timer-phase {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.12);
+  font-size: 12px;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+.timer-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.timer-repeat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timer-repeat-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.timer-repeat-options {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.timer-repeat-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.timer-repeat-options input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.timer-input {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timer-input input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.timer-display {
+  text-align: center;
+  font-size: clamp(52px, 12vw, 76px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.timer-start-row {
+  display: flex;
+  justify-content: center;
+}
+
+.timer-actions {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.main {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.24), rgba(16, 185, 129, 0.24));
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #e0f2fe;
+  font-size: 18px;
+  padding: 14px;
+  min-width: 160px;
+}
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btn.warn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fef3c7;
+}
