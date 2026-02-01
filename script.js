@@ -29,6 +29,7 @@ const controls = {
   expandLeft: $("btnExpandLeft"),
   voiceEnabled: $("voiceEnabledToggle"),
   voiceTest: $("voiceTestBtn"),
+  voiceStatus: $("voiceStatus"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -609,9 +610,15 @@ const updateAssignOverlay = () => {
 
 let speechUnlocked = false;
 
+const updateVoiceStatus = (text) => {
+  if (!controls.voiceStatus) return;
+  controls.voiceStatus.textContent = text ?? "";
+};
+
 const prepareSpeech = () => {
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.getVoices();
+  const voices = window.speechSynthesis.getVoices();
+  updateVoiceStatus(`音声:${voices.length}`);
 };
 
 const numberToCallout = (value) => {
@@ -706,10 +713,17 @@ const speakTest = () => {
   if (!window.speechSynthesis) return;
   speechUnlocked = true;
   prepareSpeech();
+  const voices = window.speechSynthesis.getVoices();
   const utter = new SpeechSynthesisUtterance("テスト");
   utter.lang = "ja-JP";
   const voice = pickVoice(state.settings.voiceGender);
   if (voice) utter.voice = voice;
+  updateVoiceStatus(
+    `音声:${voices.length}${voice?.name ? ` / ${voice.name}` : " / default"}`
+  );
+  utter.onstart = () => updateVoiceStatus(`再生中:${voice?.name ?? "default"}`);
+  utter.onend = () => updateVoiceStatus(`完了:${voice?.name ?? "default"}`);
+  utter.onerror = () => updateVoiceStatus("エラー:再生失敗");
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utter);
   window.speechSynthesis.resume?.();
