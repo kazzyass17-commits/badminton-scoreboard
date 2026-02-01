@@ -670,6 +670,19 @@ const speakCallout = (text) => {
   window.speechSynthesis.resume?.();
 };
 
+const speakTest = () => {
+  if (!window.speechSynthesis) return;
+  speechUnlocked = true;
+  prepareSpeech();
+  const utter = new SpeechSynthesisUtterance("テスト");
+  utter.lang = "ja-JP";
+  const voice = pickVoice(state.settings.voiceGender);
+  if (voice) utter.voice = voice;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+  window.speechSynthesis.resume?.();
+};
+
 const speakStartCall = () => {
   if (state.scores.A === 0 && state.scores.B === 0 && state.pointLog.length === 0) {
     speakCallout("ラブオールプレイ");
@@ -1122,9 +1135,7 @@ function bindEvents() {
   }
   if (controls.voiceTest) {
     controls.voiceTest.addEventListener("click", () => {
-      speechUnlocked = true;
-      prepareSpeech();
-      speakCallout("テスト");
+      speakTest();
     });
   }
   controls.voiceGender?.forEach((r) => {
