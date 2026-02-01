@@ -651,14 +651,13 @@ const pickVoice = (gender) => {
   const japanese = voices.filter((v) => v.lang?.toLowerCase().startsWith("ja"));
   if (!japanese.length) return null;
   const lower = (name) => name?.toLowerCase?.() ?? "";
-  const byGender =
-    gender === "male"
-      ? /male|man|男性|おとこ|otoko|otoya/.test(lower(name))
-      : /female|woman|女性|おんな|onna|kyoko|siri|nanami|misaki|haruka|yuri|yuna/.test(
-          lower(name)
-        );
+  const maleMatcher = /male|man|男性|おとこ|otoko|otoya/;
+  const femaleMatcher =
+    /female|woman|女性|おんな|onna|kyoko|siri|nanami|misaki|haruka|yuri|yuna/;
+  const matchesGender = (name) =>
+    (gender === "male" ? maleMatcher : femaleMatcher).test(lower(name));
   const byTag = (v) => v.gender?.toLowerCase?.() === gender;
-  return japanese.find((v) => byTag(v)) || japanese.find((v) => byGender(v.name)) || japanese[0];
+  return japanese.find((v) => byTag(v)) || japanese.find((v) => matchesGender(v.name)) || japanese[0];
 };
 
 const speakCallout = (text) => {
