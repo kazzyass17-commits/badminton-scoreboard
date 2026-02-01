@@ -651,10 +651,14 @@ const pickVoice = (gender) => {
   const japanese = voices.filter((v) => v.lang?.toLowerCase().startsWith("ja"));
   if (!japanese.length) return null;
   const lower = (name) => name?.toLowerCase?.() ?? "";
-  if (gender === "male") {
-    return japanese.find((v) => /male|man|男性|おとこ|otoko/.test(lower(v.name))) ?? japanese[0];
-  }
-  return japanese.find((v) => /female|woman|女性|おんな|onna/.test(lower(v.name))) ?? japanese[0];
+  const byGender =
+    gender === "male"
+      ? /male|man|男性|おとこ|otoko|otoya/.test(lower(name))
+      : /female|woman|女性|おんな|onna|kyoko|siri|nanami|misaki|haruka|yuri|yuna/.test(
+          lower(name)
+        );
+  const byTag = (v) => v.gender?.toLowerCase?.() === gender;
+  return japanese.find((v) => byTag(v)) || japanese.find((v) => byGender(v.name)) || japanese[0];
 };
 
 const speakCallout = (text) => {
@@ -668,6 +672,35 @@ const speakCallout = (text) => {
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utter);
   window.speechSynthesis.resume?.();
+};
+
+const speakSequence = (parts, pauseMs = 280) => {
+  if (!state.settings.voiceEnabled) return;
+  if (!window.speechSynthesis) return;
+  if (!speechUnlocked) return;
+  const items = parts.filter(Boolean);
+  if (!items.length) return;
+  let index = 0;
+  const playNext = () => {
+    if (index >= items.length) return;
+    const text = items[index++];
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "ja-JP";
+    const voice = pickVoice(state.settings.voiceGender);
+    if (voice) utter.voice = voice;
+    utter.onend = () => {
+      if (index < items.length && pauseMs > 0) {
+        setTimeout(playNext, pauseMs);
+      } else {
+        playNext();
+      }
+    };
+    utter.onerror = utter.onend;
+    window.speechSynthesis.speak(utter);
+    window.speechSynthesis.resume?.();
+  };
+  window.speechSynthesis.cancel();
+  playNext();
 };
 
 const speakTest = () => {
@@ -690,18 +723,18 @@ const speakStartCall = () => {
 };
 
 const speakPointUpdate = (scoringSide, previousServingSide) => {
+  const prefix = scoringSide === previousServingSide ? "ポイント" : "サービスオーバー";
   const scoreA = state.scores.A;
   const scoreB = state.scores.B;
   if (scoreA === scoreB) {
     const text = `${numberToCallout(scoreA)}オール`;
-    speakCallout(text);
+    speakSequence([prefix, text]);
     return;
   }
-  const prefix = scoringSide === previousServingSide ? "ポイント" : "サービスオーバー";
   const first = scoringSide === "A" ? scoreA : scoreB;
   const second = scoringSide === "A" ? scoreB : scoreA;
-  const text = `${prefix} ${numberToCallout(first)}、${numberToCallout(second)}`;
-  speakCallout(text);
+  const text = `${numberToCallout(first)}、${numberToCallout(second)}`;
+  speakSequence([prefix, text]);
 };
 
 const scheduleTouchDrag = (name, sourceSlot) => {
