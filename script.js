@@ -616,7 +616,10 @@ const updateVoiceStatus = (text) => {
 };
 
 const prepareSpeech = () => {
-  if (!window.speechSynthesis) return;
+  if (!window.speechSynthesis) {
+    updateVoiceStatus("音声:未対応");
+    return;
+  }
   const voices = window.speechSynthesis.getVoices();
   updateVoiceStatus(`音声:${voices.length}`);
 };
@@ -714,6 +717,9 @@ const speakTest = () => {
   speechUnlocked = true;
   prepareSpeech();
   const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    updateVoiceStatus("音声:0");
+  }
   const utter = new SpeechSynthesisUtterance("テスト");
   utter.lang = "ja-JP";
   const voice = pickVoice(state.settings.voiceGender);
@@ -1447,6 +1453,7 @@ function init() {
   sessionStorage.removeItem(BOARD_RELOAD_KEY);
   syncUI();
   bindEvents();
+  updateVoiceStatus("音声:準備中");
   if (window.speechSynthesis) {
     prepareSpeech();
     window.speechSynthesis.onvoiceschanged = () => prepareSpeech();
