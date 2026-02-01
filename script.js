@@ -670,14 +670,22 @@ const pickVoice = (gender) => {
   return japanese.find((v) => byTag(v)) || japanese.find((v) => matchesGender(v.name)) || japanese[0];
 };
 
+const applyVoiceSettings = (utter) => {
+  const voice = pickVoice(state.settings.voiceGender);
+  if (voice) utter.voice = voice;
+  if (state.settings.voiceGender === "male") {
+    utter.pitch = 1.15;
+    utter.rate = 1.05;
+  }
+};
+
 const speakCallout = (text) => {
   if (!state.settings.voiceEnabled) return;
   if (!window.speechSynthesis) return;
   if (!speechUnlocked) return;
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = "ja-JP";
-  const voice = pickVoice(state.settings.voiceGender);
-  if (voice) utter.voice = voice;
+  applyVoiceSettings(utter);
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utter);
   window.speechSynthesis.resume?.();
@@ -695,8 +703,7 @@ const speakSequence = (parts, pauseMs = 280) => {
     const text = items[index++];
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "ja-JP";
-    const voice = pickVoice(state.settings.voiceGender);
-    if (voice) utter.voice = voice;
+    applyVoiceSettings(utter);
     utter.onend = () => {
       if (index < items.length && pauseMs > 0) {
         setTimeout(playNext, pauseMs);
@@ -723,7 +730,7 @@ const speakTest = () => {
   const utter = new SpeechSynthesisUtterance("テスト");
   utter.lang = "ja-JP";
   const voice = pickVoice(state.settings.voiceGender);
-  if (voice) utter.voice = voice;
+  applyVoiceSettings(utter);
   updateVoiceStatus(
     `音声:${voices.length}${voice?.name ? ` / ${voice.name}` : " / default"}`
   );
