@@ -28,6 +28,7 @@ const controls = {
   collapseLeft: $("btnCollapseLeft"),
   expandLeft: $("btnExpandLeft"),
   voiceEnabled: $("voiceEnabledToggle"),
+  voiceTest: $("voiceTestBtn"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -606,6 +607,13 @@ const updateAssignOverlay = () => {
   });
 };
 
+let speechUnlocked = false;
+
+const prepareSpeech = () => {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.getVoices();
+};
+
 const numberToCallout = (value) => {
   const words = [
     "ラブ",
@@ -652,12 +660,14 @@ const pickVoice = (gender) => {
 const speakCallout = (text) => {
   if (!state.settings.voiceEnabled) return;
   if (!window.speechSynthesis) return;
+  if (!speechUnlocked) return;
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = "ja-JP";
   const voice = pickVoice(state.settings.voiceGender);
   if (voice) utter.voice = voice;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utter);
+  window.speechSynthesis.resume?.();
 };
 
 const speakStartCall = () => {
@@ -1103,9 +1113,18 @@ function bindEvents() {
       state.settings.voiceEnabled = e.target.checked;
       setStatus("読み上げ設定");
       if (state.settings.voiceEnabled) {
+        speechUnlocked = true;
+        prepareSpeech();
         speakStartCall();
       }
       saveState();
+    });
+  }
+  if (controls.voiceTest) {
+    controls.voiceTest.addEventListener("click", () => {
+      speechUnlocked = true;
+      prepareSpeech();
+      speakCallout("テスト");
     });
   }
   controls.voiceGender?.forEach((r) => {
@@ -1372,8 +1391,8 @@ function init() {
   syncUI();
   bindEvents();
   if (window.speechSynthesis) {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    prepareSpeech();
+    window.speechSynthesis.onvoiceschanged = () => prepareSpeech();
   }
   setStatus("復元済み");
 }
