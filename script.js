@@ -9,6 +9,7 @@ const controls = {
   allowDeuce: document.querySelectorAll('input[name="allowDeuce"]'),
   initialServe: document.querySelectorAll('input[name="initialServe"]'),
   serveSide: document.querySelectorAll('input[name="serveSide"]'),
+  voiceGender: document.querySelectorAll('input[name="voiceGender"]'),
   nameA1: $("nameA1"),
   nameA2: $("nameA2"),
   nameB1: $("nameB1"),
@@ -26,6 +27,7 @@ const controls = {
   historyPeek: $("btnHistoryPeek"),
   collapseLeft: $("btnCollapseLeft"),
   expandLeft: $("btnExpandLeft"),
+  voiceEnabled: $("voiceEnabledToggle"),
   dbNameInput: $("dbNameInput"),
   dbAddBtn: $("dbAddBtn"),
   playerDbList: $("playerDbList"),
@@ -43,6 +45,8 @@ const defaultState = () => ({
   settings: {
     targetPoints: 21,
     allowDeuce: true,
+    voiceEnabled: false,
+    voiceGender: "female",
   },
   players: {
     A: { p1: "選手A1", p2: "選手A2" },
@@ -227,6 +231,12 @@ function migrate(data) {
   if (!data?.viewMode) {
     next.viewMode = "board";
   }
+  if (data?.settings?.voiceEnabled === undefined) {
+    next.settings.voiceEnabled = false;
+  }
+  if (!data?.settings?.voiceGender) {
+    next.settings.voiceGender = "female";
+  }
   if (!Array.isArray(data?.rallies)) {
     next.rallies = [];
   }
@@ -293,6 +303,12 @@ function syncUI() {
   renderPlayerDB();
   updateServeRadioState();
   updateAssignOverlay();
+  if (controls.voiceEnabled) {
+    controls.voiceEnabled.checked = !!state.settings.voiceEnabled;
+  }
+  controls.voiceGender?.forEach((r) => {
+    r.checked = r.value === state.settings.voiceGender;
+  });
   syncView();
   updateScrollLimit();
 }
@@ -590,6 +606,81 @@ const updateAssignOverlay = () => {
   });
 };
 
+const numberToCallout = (value) => {
+  const words = [
+    "ラブ",
+    "ワン",
+    "ツー",
+    "スリー",
+    "フォー",
+    "ファイブ",
+    "シックス",
+    "セブン",
+    "エイト",
+    "ナイン",
+    "テン",
+    "イレブン",
+    "トゥエルブ",
+    "サーティーン",
+    "フォーティーン",
+    "フィフティーン",
+    "シックスティーン",
+    "セブンティーン",
+    "エイティーン",
+    "ナインティーン",
+    "トゥエンティ",
+  ];
+  if (value >= 0 && value < words.length) return words[value];
+  if (value >= 21 && value <= 29) {
+    return `トゥエンティ ${words[value - 20]}`;
+  }
+  if (value === 30) return "サーティ";
+  return String(value);
+};
+
+const pickVoice = (gender) => {
+  const voices = window.speechSynthesis?.getVoices?.() ?? [];
+  const japanese = voices.filter((v) => v.lang?.toLowerCase().startsWith("ja"));
+  if (!japanese.length) return null;
+  const lower = (name) => name?.toLowerCase?.() ?? "";
+  if (gender === "male") {
+    return japanese.find((v) => /male|man|男性|おとこ|otoko/.test(lower(v.name))) ?? japanese[0];
+  }
+  return japanese.find((v) => /female|woman|女性|おんな|onna/.test(lower(v.name))) ?? japanese[0];
+};
+
+const speakCallout = (text) => {
+  if (!state.settings.voiceEnabled) return;
+  if (!window.speechSynthesis) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "ja-JP";
+  const voice = pickVoice(state.settings.voiceGender);
+  if (voice) utter.voice = voice;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+};
+
+const speakStartCall = () => {
+  if (state.scores.A === 0 && state.scores.B === 0 && state.pointLog.length === 0) {
+    speakCallout("ラブオールプレイ");
+  }
+};
+
+const speakPointUpdate = (scoringSide, previousServingSide) => {
+  const scoreA = state.scores.A;
+  const scoreB = state.scores.B;
+  if (scoreA === scoreB) {
+    const text = `${numberToCallout(scoreA)}オール`;
+    speakCallout(text);
+    return;
+  }
+  const prefix = scoringSide === previousServingSide ? "ポイント" : "サービスオーバー";
+  const first = scoringSide === "A" ? scoreA : scoreB;
+  const second = scoringSide === "A" ? scoreB : scoreA;
+  const text = `${prefix} ${numberToCallout(first)}、${numberToCallout(second)}`;
+  speakCallout(text);
+};
+
 const scheduleTouchDrag = (name, sourceSlot) => {
   if (!name) return;
   clearTimeout(dragState.timer);
@@ -828,6 +919,7 @@ function addPoint(side) {
     scoreB: state.scores.B,
     server: `${state.serving.side}${state.serving.member}`,
   });
+  speakPointUpdate(side, prevServingSide);
   setStatus("編集中");
   if (isSetFinished()) {
     lastAutoFinishSnapshot = snapshot;
@@ -922,6 +1014,7 @@ function advanceToNextSet(winnerSide) {
   state.initialServeApplied = false;
   state.initialServeSide = "A";
   state.rallies = [];
+  speakStartCall();
 }
 
 function resetAll() {
@@ -932,6 +1025,7 @@ function resetAll() {
   lastAutoFinishSnapshot = null;
   state.initialServeApplied = false;
   state.initialServeSide = "A";
+  speakStartCall();
   setStatus("全リセット（リスト保持）");
   syncUI();
   saveState();
@@ -946,6 +1040,7 @@ function clearHistory() {
   state.history = [];
   state.scores.setNo = 1;
   state.sheetSetIndex = null;
+  speakStartCall();
   setStatus("履歴クリア");
   syncUI();
   saveState();
@@ -1000,6 +1095,24 @@ function bindEvents() {
       if (!e.target.checked) return;
       state.settings.allowDeuce = e.target.value === "true";
       setStatus("設定変更");
+      saveState();
+    });
+  });
+  if (controls.voiceEnabled) {
+    controls.voiceEnabled.addEventListener("change", (e) => {
+      state.settings.voiceEnabled = e.target.checked;
+      setStatus("読み上げ設定");
+      if (state.settings.voiceEnabled) {
+        speakStartCall();
+      }
+      saveState();
+    });
+  }
+  controls.voiceGender?.forEach((r) => {
+    r.addEventListener("change", (e) => {
+      if (!e.target.checked) return;
+      state.settings.voiceGender = e.target.value;
+      setStatus("読み上げ設定");
       saveState();
     });
   });
@@ -1258,6 +1371,10 @@ function init() {
   sessionStorage.removeItem(BOARD_RELOAD_KEY);
   syncUI();
   bindEvents();
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
   setStatus("復元済み");
 }
 

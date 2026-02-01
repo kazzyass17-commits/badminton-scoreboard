@@ -238,6 +238,18 @@ body.drag-active {
   accent-color: var(--accent);
 }
 
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.toggle-label input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
 .radio-group.serve-start {
   gap: 8px;
 }
